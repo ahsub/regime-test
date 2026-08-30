@@ -245,8 +245,9 @@ def plot_comparison(vix_perf: dict, sp500_perf: dict,
     
     # 2. Sharpe Ratio
     ax2 = axes[0, 1]
-    ax2.bar(['VIX-Strategie', 'S&P 500-Strategie'], 
-            [vix_perf['sharpe_ratio'], sp500_perf['sharpe_ratio']],
+    # KORREKTUR: Einzelne Werte statt Liste
+    sharpe_values = [vix_perf['sharpe_ratio'], sp500_perf['sharpe_ratio']]
+    ax2.bar(['VIX-Strategie', 'S&P 500-Strategie'], sharpe_values,
             color=['blue', 'green'])
     ax2.axhline(y=0.5, color='red', linestyle='--', alpha=0.5, label='Schwelle (0.5)')
     ax2.axhline(y=1.0, color='orange', linestyle='--', alpha=0.5, label='Schwelle (1.0)')
@@ -256,20 +257,30 @@ def plot_comparison(vix_perf: dict, sp500_perf: dict,
     
     # 3. Drawdown
     ax3 = axes[1, 0]
+    # KORREKTUR: Drawdown-Werte einzeln extrahieren
     vix_dd = vix_perf['max_drawdown']
     sp500_dd = sp500_perf['max_drawdown']
     ax3.bar(['VIX-Strategie', 'S&P 500-Strategie'], 
-            [-vix_dd*100, -sp500_dd*100],
+            [-vix_dd * 100, -sp500_dd * 100],
             color=['blue', 'green'])
     ax3.set_title('Max. Drawdown (%)', fontsize=12)
     ax3.grid(True, alpha=0.3)
     
     # 4. Positionsgrößen
     ax4 = axes[1, 1]
-    ax4.plot(vix_signals.index, vix_signals['position'], 
-             label='VIX-Position', color='blue', alpha=0.7)
-    ax4.plot(sp500_signals.index, sp500_signals['position'], 
-             label='S&P 500-Position', color='green', alpha=0.7)
+    # KORREKTUR: Auf gemeinsamen Datumsbereich beschränken
+    common_dates = vix_signals.index.intersection(sp500_signals.index)
+    if len(common_dates) > 0:
+        ax4.plot(vix_signals.loc[common_dates].index, 
+                 vix_signals.loc[common_dates]['position'], 
+                 label='VIX-Position', color='blue', alpha=0.7)
+        ax4.plot(sp500_signals.loc[common_dates].index, 
+                 sp500_signals.loc[common_dates]['position'], 
+                 label='S&P 500-Position', color='green', alpha=0.7)
+    else:
+        # Fallback: Zeige nur S&P 500
+        ax4.plot(sp500_signals.index, sp500_signals['position'], 
+                 label='S&P 500-Position', color='green', alpha=0.7)
     ax4.axhline(y=1.0, color='black', linestyle='--', alpha=0.3)
     ax4.axhline(y=0.0, color='red', linestyle='--', alpha=0.3)
     ax4.set_title('Positionsgrößen über die Zeit', fontsize=12)
