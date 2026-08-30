@@ -236,13 +236,24 @@ def print_summary(res: object, regime_df: pd.DataFrame):
         print(f"   {row['label']}: μ = {row['mean']:.4f}, σ = {row['std']:.4f}")
     
     print("\n🔄 Übergangsmatrix (bedingungslos):")
-    # KORREKTUR: transition_matrix kann auch 'transition_matrix' oder 'regime_transition' heißen
-    if hasattr(res, 'transition_matrix'):
-        trans = res.transition_matrix
-    elif hasattr(res, 'regime_transition'):
-        trans = res.regime_transition
-    else:
-        # Fallback: Selbst berechnen aus den Wahrscheinlichkeiten
+    
+    # Versuche, die Übergangsmatrix zu extrahieren
+    try:
+        if hasattr(res, 'transition_matrix'):
+            trans = res.transition_matrix
+        elif hasattr(res, 'regime_transition'):
+            trans = res.regime_transition
+        else:
+            raise AttributeError("Keine Übergangsmatrix gefunden")
+        
+        # KORREKTUR: trans ist ein numpy-array, wir formatieren jede Zahl einzeln
+        for i in range(len(trans)):
+            row_values = [f"{x:.2f}" for x in trans[i]]
+            print(f"   Regime {i}: {', '.join(row_values)}")
+            
+    except (AttributeError, TypeError) as e:
+        # Fallback: Übergangsmatrix aus Wahrscheinlichkeiten berechnen
+        print("   ⚠️ Übergangsmatrix wird aus Wahrscheinlichkeiten berechnet...")
         probabilities = res.filtered_marginal_probabilities
         if hasattr(probabilities, 'values'):
             prob_array = probabilities.values
@@ -256,10 +267,16 @@ def print_summary(res: object, regime_df: pd.DataFrame):
             from_state = dominant[t-1]
             to_state = dominant[t]
             trans[from_state, to_state] += 1
-        trans = trans / trans.sum(axis=1, keepdims=True)
-    
-    for i, row in enumerate(trans):
-        print(f"   Regime {i}: {', '.join([f'{x:.2f}' for x in row])}")
+        
+        # Normalisieren
+        row_sums = trans.sum(axis=1, keepdims=True)
+        row_sums[row_sums == 0] = 1  # Verhindere Division durch Null
+        trans = trans / row_sums
+        
+        # Ausgeben
+        for i in range(len(trans)):
+            row_values = [f"{x:.2f}" for x in trans[i]]
+            print(f"   Regime {i}: {', '.join(row_values)}")
     
     # Regime-Häufigkeiten
     probabilities = res.filtered_marginal_probabilities
@@ -274,6 +291,16 @@ def print_summary(res: object, regime_df: pd.DataFrame):
     print("\n📊 Regime-Häufigkeiten:")
     for i, label in enumerate(regime_df['label']):
         print(f"   {label}: {frequencies[i]:.1%}")
+    
+    # Wahrscheinlichkeiten speichern (damit die CSV erstellt wird)
+    try:
+        prob_df = pd.DataFrame(prob_array, 
+                               index=res.model.data.endog.index, 
+                               columns=regime_df['label'].tolist())
+        prob_df.to_csv(OUTPUT_DIR / 'regime_probabilities.csv')
+        print(f"\n💾 Wahrscheinlichkeiten gespeichert: {OUTPUT_DIR / 'regime_probabilities.csv'}")
+    except Exception as e:
+        print(f"   ⚠️ CSV konnte nicht gespeichert werden: {e}")
 
 
 # =============================================================================
