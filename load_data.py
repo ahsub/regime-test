@@ -97,15 +97,48 @@ def download_file(url: str, destination: Path) -> bool:
 
 def load_cboe_csv(filepath: Path) -> pd.DataFrame:
     """
-    Lädt eine CBOE-CSV-Datei mit Standardformat.
+    Lädt eine CBOE-CSV-Datei mit automatischer Spaltenerkennung.
     
-    Die CBOE-Dateien haben üblicherweise:
-    - Eine Spalte 'Date' mit Datumsangaben
-    - Eine Spalte 'Close' für den Schlusskurs
+    Die CBOE-Dateien können unterschiedliche Spaltennamen haben:
+    - 'Date', 'DATE' oder 'date' für das Datum
+    - 'Close', 'close' oder 'VALUE' für den Schlusskurs
+    
+    Diese Funktion findet die richtigen Spalten automatisch.
     """
-    df = pd.read_csv(filepath, parse_dates=['Date'])
-    df = df.set_index('Date')
+    # Zuerst die Datei ohne Parsing laden, um die Spaltennamen zu prüfen
+    df_raw = pd.read_csv(filepath, nrows=0)  # Nur die Kopfzeile
+    columns = df_raw.columns.tolist()
+    
+    # Finde die Datumsspalte (Groß-/Kleinschreibung egal)
+    date_col = None
+    for col in columns:
+        if col.lower() == 'date':
+            date_col = col
+            break
+    
+    if date_col is None:
+        # Falls keine 'date'-Spalte existiert, nimm die erste Spalte
+        date_col = columns[0]
+        print(f"   ⚠️ Keine 'Date'-Spalte gefunden, verwende '{date_col}' als Datumsspalte.")
+    
+    # Datei mit der erkannten Spalte einlesen
+    df = pd.read_csv(filepath, parse_dates=[date_col])
+    df = df.set_index(date_col)
     df = df.sort_index()
+    
+    # Die Close-Spalte finden (für die Visualisierung)
+    close_col = None
+    for col in df.columns:
+        if col.lower() in ['close', 'value']:
+            close_col = col
+            break
+    
+    if close_col is None:
+        close_col = df.columns[0]  # Fallback: erste Spalte
+    
+    # Umbenennen für einheitliche Spaltennamen
+    df = df.rename(columns={close_col: 'Close'})
+    
     return df
 
 
@@ -183,6 +216,11 @@ def main():
     dix_path = DATA_DIR / "DIX.csv"
     df_dix = load_and_validate(dix_path, "DIX")
     
+    # Zeige eine kurze Übersicht der geladenen Daten
+    print("\n📊 DATEN-ÜBERSICHT:")
+    print(f"   VIX: {len(df_vix)} Tage" if not df_vix.empty else "   VIX: nicht geladen")
+    print(f"   DIX: {len(df_dix)} Tage" if not df_dix.empty else "   DIX: nicht geladen")
+    
     # 3.4 Visualisierung: VIX und S&P 500
     if not df_vix.empty:
         print("\n📈 ERSTELLE VISUALISIERUNG: VIX vs. S&P 500")
@@ -220,7 +258,7 @@ def main():
             ax2.grid(True, alpha=0.3)
             ax2.set_title('VIX (Volatilitätsindex)')
             
-            plt.suptitle('Marktdaten: VIX und S&P 500 (2008 - heute)', fontsize=14)
+            plt.suptitle('Marktdaten: VIX und S&P 500 (1990 - heute)', fontsize=14)
             plt.tight_layout()
             plt.show()
             
@@ -229,7 +267,7 @@ def main():
         except Exception as e:
             print(f"   ❌ Fehler bei der Visualisierung: {e}")
     else:
-        print("⚠️ Keine VIX-Daten vorhanden – Visualisierung wird übersprungen.")
+        print("\n⚠️ Keine VIX-Daten vorhanden – Visualisierung wird übersprungen.")
     
     # 3.5 Abschlussmeldung
     print("\n" + "=" * 60)
