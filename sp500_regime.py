@@ -245,8 +245,10 @@ def plot_comparison(vix_perf: dict, sp500_perf: dict,
     
     # 2. Sharpe Ratio
     ax2 = axes[0, 1]
-    # KORREKTUR: Werte explizit als Liste von Floats
-    sharpe_values = [float(vix_perf['sharpe_ratio']), float(sp500_perf['sharpe_ratio'])]
+    # KORREKTUR: Sicherstellen, dass wir einzelne Zahlen haben
+    vix_sharpe = float(vix_perf['sharpe_ratio']) if not isinstance(vix_perf['sharpe_ratio'], pd.Series) else float(vix_perf['sharpe_ratio'].iloc[0])
+    sp500_sharpe = float(sp500_perf['sharpe_ratio']) if not isinstance(sp500_perf['sharpe_ratio'], pd.Series) else float(sp500_perf['sharpe_ratio'].iloc[0])
+    sharpe_values = [vix_sharpe, sp500_sharpe]
     bars = ax2.bar(['VIX-Strategie', 'S&P 500-Strategie'], sharpe_values,
                    color=['blue', 'green'])
     ax2.axhline(y=0.5, color='red', linestyle='--', alpha=0.5, label='Schwelle (0.5)')
@@ -254,29 +256,35 @@ def plot_comparison(vix_perf: dict, sp500_perf: dict,
     ax2.set_title('Sharpe Ratio Vergleich', fontsize=12)
     ax2.legend()
     ax2.grid(True, alpha=0.3)
-    # Werte über den Balken anzeigen
     for bar, value in zip(bars, sharpe_values):
         ax2.text(bar.get_x() + bar.get_width()/2., bar.get_height() + 0.05,
                 f'{value:.2f}', ha='center', va='bottom')
     
     # 3. Drawdown
     ax3 = axes[1, 0]
-    # KORREKTUR: Drawdown-Werte als positive Zahlen (Prozent)
-    vix_dd = float(vix_perf['max_drawdown']) * -100
-    sp500_dd = float(sp500_perf['max_drawdown']) * -100
+    # KORREKTUR: Drawdown-Werte als einzelne Zahlen extrahieren
+    vix_dd_val = vix_perf['max_drawdown']
+    sp500_dd_val = sp500_perf['max_drawdown']
+    
+    # Wenn es Series sind, den ersten Wert nehmen
+    if isinstance(vix_dd_val, pd.Series):
+        vix_dd_val = vix_dd_val.iloc[0]
+    if isinstance(sp500_dd_val, pd.Series):
+        sp500_dd_val = sp500_dd_val.iloc[0]
+    
+    vix_dd = float(vix_dd_val) * -100
+    sp500_dd = float(sp500_dd_val) * -100
     bars = ax3.bar(['VIX-Strategie', 'S&P 500-Strategie'], 
                    [vix_dd, sp500_dd],
                    color=['blue', 'green'])
     ax3.set_title('Max. Drawdown (%)', fontsize=12)
     ax3.grid(True, alpha=0.3)
-    # Werte über den Balken anzeigen
     for bar, value in zip(bars, [vix_dd, sp500_dd]):
         ax3.text(bar.get_x() + bar.get_width()/2., bar.get_height() + 1,
                 f'{value:.1f}%', ha='center', va='bottom')
     
     # 4. Positionsgrößen
     ax4 = axes[1, 1]
-    # Auf gemeinsamen Datumsbereich beschränken
     common_dates = vix_signals.index.intersection(sp500_signals.index)
     if len(common_dates) > 0:
         ax4.plot(vix_signals.loc[common_dates].index, 
