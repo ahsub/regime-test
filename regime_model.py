@@ -111,10 +111,10 @@ def interpret_regimes(res: object) -> pd.DataFrame:
     return df
 
 # =============================================================================
-# 5. VISUALISIERUNG (KORRIGIERT)
+# 5. VISUALISIERUNGEN (GEPATCHT)
 # =============================================================================
 
-def plot_regime_probabilities(probabilities: np.ndarray, 
+def plot_regime_probabilities(probabilities,  # Kann DataFrame oder Array sein
                               regime_labels: list,
                               dates: pd.DatetimeIndex,
                               returns: pd.Series):
@@ -123,8 +123,14 @@ def plot_regime_probabilities(probabilities: np.ndarray,
     
     colors = ['green', 'orange', 'red']
     
+    # Sicherstellen, dass wir ein numpy-array haben
+    if hasattr(probabilities, 'values'):
+        prob_array = probabilities.values
+    else:
+        prob_array = np.array(probabilities)
+    
     # Regime mit höchster Wahrscheinlichkeit zuweisen
-    dominant_regime = np.argmax(probabilities, axis=1)
+    dominant_regime = np.argmax(prob_array, axis=1)
     
     # Renditen nach Regime einfärben
     for i in range(len(regime_labels)):
@@ -141,7 +147,7 @@ def plot_regime_probabilities(probabilities: np.ndarray,
     
     # Regime-Wahrscheinlichkeiten
     for i in range(len(regime_labels)):
-        ax2.fill_between(dates, 0, probabilities[:, i], 
+        ax2.fill_between(dates, 0, prob_array[:, i], 
                          alpha=0.4, label=regime_labels[i],
                          color=colors[i % len(colors)])
     
@@ -157,13 +163,17 @@ def plot_regime_probabilities(probabilities: np.ndarray,
     print(f"💾 Grafik gespeichert: {OUTPUT_DIR / 'regime_probabilities.png'}")
 
 
-def plot_regime_distribution(probabilities: np.ndarray, 
-                             regime_labels: list):
+def plot_regime_distribution(probabilities, regime_labels: list):
     """Zeigt die Verteilung der Regime-Wahrscheinlichkeiten als Boxplot."""
     fig, ax = plt.subplots(figsize=(10, 6))
     
-    # Aus numpy-array einen DataFrame machen
-    df_plot = pd.DataFrame(probabilities, columns=regime_labels)
+    # Sicherstellen, dass wir einen DataFrame haben
+    if hasattr(probabilities, 'values'):
+        prob_array = probabilities.values
+    else:
+        prob_array = np.array(probabilities)
+    
+    df_plot = pd.DataFrame(prob_array, columns=regime_labels)
     
     sns.boxplot(data=df_plot, ax=ax)
     ax.set_ylabel('Wahrscheinlichkeit')
@@ -176,10 +186,15 @@ def plot_regime_distribution(probabilities: np.ndarray,
     print(f"💾 Grafik gespeichert: {OUTPUT_DIR / 'regime_distribution.png'}")
 
 
-def plot_regime_transitions(probabilities: np.ndarray, 
-                            regime_labels: list):
+def plot_regime_transitions(probabilities, regime_labels: list):
     """Zeigt die Übergangswahrscheinlichkeiten zwischen Regimen als Heatmap."""
-    dominant = np.argmax(probabilities, axis=1)
+    # Sicherstellen, dass wir ein numpy-array haben
+    if hasattr(probabilities, 'values'):
+        prob_array = probabilities.values
+    else:
+        prob_array = np.array(probabilities)
+    
+    dominant = np.argmax(prob_array, axis=1)
     n = len(regime_labels)
     transition_matrix = np.zeros((n, n))
     
@@ -225,8 +240,14 @@ def print_summary(res: object, regime_df: pd.DataFrame):
     for i, row in enumerate(trans):
         print(f"   Regime {i}: {', '.join([f'{x:.2f}' for x in row])}")
     
-    probabilities = np.array(res.filtered_marginal_probabilities)
-    dominant = np.argmax(probabilities, axis=1)
+    # Regime-Häufigkeiten
+    probabilities = res.filtered_marginal_probabilities
+    if hasattr(probabilities, 'values'):
+        prob_array = probabilities.values
+    else:
+        prob_array = np.array(probabilities)
+    
+    dominant = np.argmax(prob_array, axis=1)
     frequencies = np.bincount(dominant) / len(dominant)
     
     print("\n📊 Regime-Häufigkeiten:")
@@ -252,6 +273,7 @@ def main():
     regime_df = interpret_regimes(res)
     regime_labels = regime_df['label'].tolist()
     
+    # Wahrscheinlichkeiten extrahieren
     probabilities = res.filtered_marginal_probabilities
     
     print("\n📊 Erstelle Visualisierungen...")
@@ -262,7 +284,13 @@ def main():
     
     print_summary(res, regime_df)
     
-    prob_df = pd.DataFrame(probabilities, 
+    # Wahrscheinlichkeiten speichern
+    if hasattr(probabilities, 'values'):
+        prob_array = probabilities.values
+    else:
+        prob_array = np.array(probabilities)
+    
+    prob_df = pd.DataFrame(prob_array, 
                            index=returns.index, 
                            columns=regime_labels)
     prob_df.to_csv(OUTPUT_DIR / 'regime_probabilities.csv')
