@@ -225,7 +225,7 @@ def print_summary(res: object, regime_df: pd.DataFrame):
     for i, row in enumerate(trans):
         print(f"   Regime {i}: {', '.join([f'{x:.2f}' for x in row])}")
     
-    probabilities = res.filtered_marginal_probabilities
+    probabilities = np.array(res.filtered_marginal_probabilities)
     dominant = np.argmax(probabilities, axis=1)
     frequencies = np.bincount(dominant) / len(dominant)
     
