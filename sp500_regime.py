@@ -336,15 +336,29 @@ def plot_comparison(vix_perf: dict, sp500_perf: dict,
 
 def print_performance_report(name: str, perf: dict):
     """Gibt einen Performance-Report aus."""
+    # Hilfsfunktion: Extrahiert einen einzelnen Wert aus einem dict
+    def safe_value(value):
+        if isinstance(value, pd.Series):
+            return value.iloc[0] if len(value) > 0 else 0.0
+        return value
+    
+    # Werte sicher extrahieren
+    total_return = safe_value(perf['total_return_strategy'])
+    market_return = safe_value(perf['total_return_market'])
+    sharpe = safe_value(perf['sharpe_ratio'])
+    max_dd = safe_value(perf['max_drawdown'])
+    num_trades = safe_value(perf['num_trades'])
+    avg_pos = safe_value(perf['avg_position'])
+    
     print(f"\n📊 {name} PERFORMANCE-REPORT")
     print("-" * 40)
-    print(f"   Gesamtrendite:    {perf['total_return_strategy']:.2%}")
-    print(f"   Buy & Hold:       {perf['total_return_market']:.2%}")
-    print(f"   Mehrrendite:      {perf['total_return_strategy'] - perf['total_return_market']:.2%}")
-    print(f"   Sharpe Ratio:     {perf['sharpe_ratio']:.2f}")
-    print(f"   Max. Drawdown:    {perf['max_drawdown']:.2%}")
-    print(f"   Anzahl Trades:    {perf['num_trades']}")
-    print(f"   Ø Position:       {perf['avg_position']:.1%}")
+    print(f"   Gesamtrendite:    {total_return:.2%}")
+    print(f"   Buy & Hold:       {market_return:.2%}")
+    print(f"   Mehrrendite:      {total_return - market_return:.2%}")
+    print(f"   Sharpe Ratio:     {sharpe:.2f}")
+    print(f"   Max. Drawdown:    {max_dd:.2%}")
+    print(f"   Anzahl Trades:    {int(num_trades) if num_trades is not None else 0}")
+    print(f"   Ø Position:       {avg_pos:.1%}")
 
 # =============================================================================
 # 7. HAUPTPROGRAMM
