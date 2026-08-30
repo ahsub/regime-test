@@ -236,7 +236,28 @@ def print_summary(res: object, regime_df: pd.DataFrame):
         print(f"   {row['label']}: μ = {row['mean']:.4f}, σ = {row['std']:.4f}")
     
     print("\n🔄 Übergangsmatrix (bedingungslos):")
-    trans = res.transition_matrix
+    # KORREKTUR: transition_matrix kann auch 'transition_matrix' oder 'regime_transition' heißen
+    if hasattr(res, 'transition_matrix'):
+        trans = res.transition_matrix
+    elif hasattr(res, 'regime_transition'):
+        trans = res.regime_transition
+    else:
+        # Fallback: Selbst berechnen aus den Wahrscheinlichkeiten
+        probabilities = res.filtered_marginal_probabilities
+        if hasattr(probabilities, 'values'):
+            prob_array = probabilities.values
+        else:
+            prob_array = np.array(probabilities)
+        
+        dominant = np.argmax(prob_array, axis=1)
+        n = len(regime_df)
+        trans = np.zeros((n, n))
+        for t in range(1, len(dominant)):
+            from_state = dominant[t-1]
+            to_state = dominant[t]
+            trans[from_state, to_state] += 1
+        trans = trans / trans.sum(axis=1, keepdims=True)
+    
     for i, row in enumerate(trans):
         print(f"   Regime {i}: {', '.join([f'{x:.2f}' for x in row])}")
     
