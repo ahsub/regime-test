@@ -240,51 +240,58 @@ def plot_comparison(vix_perf: dict, sp500_perf: dict,
     ax1.plot(sp500_perf['market_cum'].index, sp500_perf['market_cum'], 
              label='S&P 500 (Buy&Hold)', color='black', alpha=0.5, linestyle='--')
     ax1.set_title('Kumulierte Renditen', fontsize=12)
-    ax1.legend()
+    ax1.legend(loc='upper left')
     ax1.grid(True, alpha=0.3)
     
     # 2. Sharpe Ratio
     ax2 = axes[0, 1]
-    # KORREKTUR: Einzelne Werte statt Liste
-    sharpe_values = [vix_perf['sharpe_ratio'], sp500_perf['sharpe_ratio']]
-    ax2.bar(['VIX-Strategie', 'S&P 500-Strategie'], sharpe_values,
-            color=['blue', 'green'])
+    # KORREKTUR: Werte explizit als Liste von Floats
+    sharpe_values = [float(vix_perf['sharpe_ratio']), float(sp500_perf['sharpe_ratio'])]
+    bars = ax2.bar(['VIX-Strategie', 'S&P 500-Strategie'], sharpe_values,
+                   color=['blue', 'green'])
     ax2.axhline(y=0.5, color='red', linestyle='--', alpha=0.5, label='Schwelle (0.5)')
     ax2.axhline(y=1.0, color='orange', linestyle='--', alpha=0.5, label='Schwelle (1.0)')
     ax2.set_title('Sharpe Ratio Vergleich', fontsize=12)
     ax2.legend()
     ax2.grid(True, alpha=0.3)
+    # Werte über den Balken anzeigen
+    for bar, value in zip(bars, sharpe_values):
+        ax2.text(bar.get_x() + bar.get_width()/2., bar.get_height() + 0.05,
+                f'{value:.2f}', ha='center', va='bottom')
     
     # 3. Drawdown
     ax3 = axes[1, 0]
-    # KORREKTUR: Drawdown-Werte einzeln extrahieren
-    vix_dd = vix_perf['max_drawdown']
-    sp500_dd = sp500_perf['max_drawdown']
-    ax3.bar(['VIX-Strategie', 'S&P 500-Strategie'], 
-            [-vix_dd * 100, -sp500_dd * 100],
-            color=['blue', 'green'])
+    # KORREKTUR: Drawdown-Werte als positive Zahlen (Prozent)
+    vix_dd = float(vix_perf['max_drawdown']) * -100
+    sp500_dd = float(sp500_perf['max_drawdown']) * -100
+    bars = ax3.bar(['VIX-Strategie', 'S&P 500-Strategie'], 
+                   [vix_dd, sp500_dd],
+                   color=['blue', 'green'])
     ax3.set_title('Max. Drawdown (%)', fontsize=12)
     ax3.grid(True, alpha=0.3)
+    # Werte über den Balken anzeigen
+    for bar, value in zip(bars, [vix_dd, sp500_dd]):
+        ax3.text(bar.get_x() + bar.get_width()/2., bar.get_height() + 1,
+                f'{value:.1f}%', ha='center', va='bottom')
     
     # 4. Positionsgrößen
     ax4 = axes[1, 1]
-    # KORREKTUR: Auf gemeinsamen Datumsbereich beschränken
+    # Auf gemeinsamen Datumsbereich beschränken
     common_dates = vix_signals.index.intersection(sp500_signals.index)
     if len(common_dates) > 0:
         ax4.plot(vix_signals.loc[common_dates].index, 
                  vix_signals.loc[common_dates]['position'], 
-                 label='VIX-Position', color='blue', alpha=0.7)
+                 label='VIX-Position', color='blue', alpha=0.7, linewidth=0.8)
         ax4.plot(sp500_signals.loc[common_dates].index, 
                  sp500_signals.loc[common_dates]['position'], 
-                 label='S&P 500-Position', color='green', alpha=0.7)
+                 label='S&P 500-Position', color='green', alpha=0.7, linewidth=0.8)
     else:
-        # Fallback: Zeige nur S&P 500
         ax4.plot(sp500_signals.index, sp500_signals['position'], 
                  label='S&P 500-Position', color='green', alpha=0.7)
-    ax4.axhline(y=1.0, color='black', linestyle='--', alpha=0.3)
-    ax4.axhline(y=0.0, color='red', linestyle='--', alpha=0.3)
+    ax4.axhline(y=1.0, color='black', linestyle='--', alpha=0.3, label='100%')
+    ax4.axhline(y=0.0, color='red', linestyle='--', alpha=0.3, label='0%')
     ax4.set_title('Positionsgrößen über die Zeit', fontsize=12)
-    ax4.legend()
+    ax4.legend(loc='upper left')
     ax4.grid(True, alpha=0.3)
     
     plt.tight_layout()
