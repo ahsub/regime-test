@@ -29,7 +29,6 @@ OUTPUT_DIR.mkdir(exist_ok=True)
 
 # Modell-Parameter
 N_REGIMES = 3  # 3 Regime: ruhig, volatil, Krise
-LOOKBACK_DAYS = 252  # 1 Jahr für das Modell
 
 # =============================================================================
 # 2. DATEN LADEN
@@ -66,7 +65,7 @@ def fit_markov_model(returns: pd.Series, n_regimes: int = 3) -> object:
     return res
 
 # =============================================================================
-# 4. REGIME-INTERPRETATION (KORRIGIERT)
+# 4. REGIME-INTERPRETATION
 # =============================================================================
 
 def interpret_regimes(res: object) -> pd.DataFrame:
@@ -76,7 +75,7 @@ def interpret_regimes(res: object) -> pd.DataFrame:
     """
     n = res.k_regimes
     
-    # KORREKTUR: .iloc[] statt direkter Index
+    # Parameter extrahieren
     means = res.params.iloc[:n].values
     stds = np.sqrt(res.params.iloc[n:2*n].values)
     
@@ -112,7 +111,7 @@ def interpret_regimes(res: object) -> pd.DataFrame:
     return df
 
 # =============================================================================
-# 5. VISUALISIERUNG
+# 5. VISUALISIERUNG (KORRIGIERT)
 # =============================================================================
 
 def plot_regime_probabilities(probabilities: np.ndarray, 
@@ -123,8 +122,11 @@ def plot_regime_probabilities(probabilities: np.ndarray,
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 10), sharex=True)
     
     colors = ['green', 'orange', 'red']
+    
+    # Regime mit höchster Wahrscheinlichkeit zuweisen
     dominant_regime = np.argmax(probabilities, axis=1)
     
+    # Renditen nach Regime einfärben
     for i in range(len(regime_labels)):
         mask = (dominant_regime == i)
         ax1.scatter(dates[mask], returns[mask], 
@@ -137,6 +139,7 @@ def plot_regime_probabilities(probabilities: np.ndarray,
     ax1.legend()
     ax1.grid(True, alpha=0.3)
     
+    # Regime-Wahrscheinlichkeiten
     for i in range(len(regime_labels)):
         ax2.fill_between(dates, 0, probabilities[:, i], 
                          alpha=0.4, label=regime_labels[i],
@@ -158,11 +161,15 @@ def plot_regime_distribution(probabilities: np.ndarray,
                              regime_labels: list):
     """Zeigt die Verteilung der Regime-Wahrscheinlichkeiten als Boxplot."""
     fig, ax = plt.subplots(figsize=(10, 6))
+    
+    # Aus numpy-array einen DataFrame machen
     df_plot = pd.DataFrame(probabilities, columns=regime_labels)
+    
     sns.boxplot(data=df_plot, ax=ax)
     ax.set_ylabel('Wahrscheinlichkeit')
     ax.set_title('Verteilung der Regime-Wahrscheinlichkeiten')
     ax.grid(True, alpha=0.3)
+    
     plt.tight_layout()
     plt.savefig(OUTPUT_DIR / 'regime_distribution.png', dpi=150)
     plt.show()
@@ -181,6 +188,7 @@ def plot_regime_transitions(probabilities: np.ndarray,
         to_state = dominant[t]
         transition_matrix[from_state, to_state] += 1
     
+    # Normalisieren
     transition_matrix = transition_matrix / transition_matrix.sum(axis=1, keepdims=True)
     
     fig, ax = plt.subplots(figsize=(8, 6))
@@ -191,6 +199,7 @@ def plot_regime_transitions(probabilities: np.ndarray,
     ax.set_title('Übergangswahrscheinlichkeiten zwischen Regimen')
     ax.set_xlabel('Zu Regime')
     ax.set_ylabel('Von Regime')
+    
     plt.tight_layout()
     plt.savefig(OUTPUT_DIR / 'regime_transitions.png', dpi=150)
     plt.show()
