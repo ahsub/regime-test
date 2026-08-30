@@ -226,86 +226,112 @@ def calculate_performance(signals: pd.DataFrame,
 
 def plot_comparison(vix_perf: dict, sp500_perf: dict, 
                     vix_signals: pd.DataFrame, sp500_signals: pd.DataFrame):
-    """Vergleicht die Performance der VIX- und S&P 500-basierten Strategien."""
-    fig, axes = plt.subplots(2, 2, figsize=(14, 10))
+    """
+    Professioneller Vergleich der VIX- und S&P 500-basierten Strategien.
+    Mit sauberen Achsen, Legenden und optimierter Darstellung.
+    """
+    # Daten sicher extrahieren
+    def safe_float(value):
+        if isinstance(value, pd.Series):
+            return float(value.iloc[0])
+        return float(value)
     
-    # 1. Kumulierte Renditen
-    ax1 = axes[0, 0]
+    vix_sharpe = safe_float(vix_perf['sharpe_ratio'])
+    sp500_sharpe = safe_float(sp500_perf['sharpe_ratio'])
+    vix_dd = safe_float(vix_perf['max_drawdown']) * -100
+    sp500_dd = safe_float(sp500_perf['max_drawdown']) * -100
+    vix_return = safe_float(vix_perf['total_return_strategy']) * 100
+    sp500_return = safe_float(sp500_perf['total_return_strategy']) * 100
+    
+    # Figure mit besserer Aufteilung
+    fig = plt.figure(figsize=(15, 10))
+    gs = fig.add_gridspec(2, 3, hspace=0.3, wspace=0.3)
+    
+    # 1. Kumulierte Renditen (Hauptplot – größer)
+    ax1 = fig.add_subplot(gs[0, :2])
     ax1.plot(vix_perf['strategy_cum'].index, vix_perf['strategy_cum'], 
-             label='VIX-Strategie', color='blue', linewidth=1.5)
+             label='VIX-Strategie', color='#1f77b4', linewidth=1.5)
     ax1.plot(sp500_perf['strategy_cum'].index, sp500_perf['strategy_cum'], 
-             label='S&P 500-Strategie', color='green', linewidth=1.5)
+             label='S&P 500-Strategie', color='#2ca02c', linewidth=1.5)
     ax1.plot(vix_perf['market_cum'].index, vix_perf['market_cum'], 
-             label='VIX (Buy&Hold)', color='grey', alpha=0.5, linestyle='--')
+             label='VIX Buy&Hold', color='#1f77b4', linestyle='--', alpha=0.5, linewidth=1)
     ax1.plot(sp500_perf['market_cum'].index, sp500_perf['market_cum'], 
-             label='S&P 500 (Buy&Hold)', color='black', alpha=0.5, linestyle='--')
-    ax1.set_title('Kumulierte Renditen', fontsize=12)
-    ax1.legend(loc='upper left')
-    ax1.grid(True, alpha=0.3)
+             label='S&P 500 Buy&Hold', color='#2ca02c', linestyle='--', alpha=0.5, linewidth=1)
+    ax1.axhline(y=1.0, color='black', linestyle='-', alpha=0.2, linewidth=0.5)
+    ax1.set_title('Kumulierte Renditen (logarithmische Skala)', fontsize=13)
+    ax1.set_ylabel('Kumulative Rendite (log)')
+    ax1.set_yscale('log')
+    ax1.legend(loc='upper left', fontsize=9)
+    ax1.grid(True, alpha=0.3, linestyle='--')
     
-    # 2. Sharpe Ratio
-    ax2 = axes[0, 1]
-    # KORREKTUR: Sicherstellen, dass wir einzelne Zahlen haben
-    vix_sharpe = float(vix_perf['sharpe_ratio']) if not isinstance(vix_perf['sharpe_ratio'], pd.Series) else float(vix_perf['sharpe_ratio'].iloc[0])
-    sp500_sharpe = float(sp500_perf['sharpe_ratio']) if not isinstance(sp500_perf['sharpe_ratio'], pd.Series) else float(sp500_perf['sharpe_ratio'].iloc[0])
-    sharpe_values = [vix_sharpe, sp500_sharpe]
-    bars = ax2.bar(['VIX-Strategie', 'S&P 500-Strategie'], sharpe_values,
-                   color=['blue', 'green'])
-    ax2.axhline(y=0.5, color='red', linestyle='--', alpha=0.5, label='Schwelle (0.5)')
-    ax2.axhline(y=1.0, color='orange', linestyle='--', alpha=0.5, label='Schwelle (1.0)')
-    ax2.set_title('Sharpe Ratio Vergleich', fontsize=12)
-    ax2.legend()
-    ax2.grid(True, alpha=0.3)
-    for bar, value in zip(bars, sharpe_values):
-        ax2.text(bar.get_x() + bar.get_width()/2., bar.get_height() + 0.05,
-                f'{value:.2f}', ha='center', va='bottom')
+    # 2. Sharpe Ratio (Balken)
+    ax2 = fig.add_subplot(gs[0, 2])
+    bars = ax2.bar(['VIX', 'S&P 500'], [vix_sharpe, sp500_sharpe], 
+                   color=['#1f77b4', '#2ca02c'], edgecolor='black', linewidth=0.8)
+    ax2.axhline(y=0.5, color='red', linestyle='--', alpha=0.7, linewidth=1.2, label='Schwelle 0.5')
+    ax2.axhline(y=1.0, color='orange', linestyle='--', alpha=0.7, linewidth=1.2, label='Schwelle 1.0')
+    ax2.set_title('Sharpe Ratio', fontsize=13)
+    ax2.set_ylabel('Sharpe Ratio')
+    ax2.set_ylim(0, max(1.5, max(vix_sharpe, sp500_sharpe) * 1.2))
+    ax2.legend(loc='upper right', fontsize=9)
+    ax2.grid(True, alpha=0.3, axis='y', linestyle='--')
+    # Werte über Balken
+    for bar, val in zip(bars, [vix_sharpe, sp500_sharpe]):
+        ax2.text(bar.get_x() + bar.get_width()/2., bar.get_height() + 0.03,
+                f'{val:.2f}', ha='center', va='bottom', fontsize=10, fontweight='bold')
     
-    # 3. Drawdown
-    ax3 = axes[1, 0]
-    # KORREKTUR: Drawdown-Werte als einzelne Zahlen extrahieren
-    vix_dd_val = vix_perf['max_drawdown']
-    sp500_dd_val = sp500_perf['max_drawdown']
+    # 3. Drawdown (Balken)
+    ax3 = fig.add_subplot(gs[1, 0])
+    bars = ax3.bar(['VIX', 'S&P 500'], [vix_dd, sp500_dd], 
+                   color=['#1f77b4', '#2ca02c'], edgecolor='black', linewidth=0.8)
+    ax3.set_title('Max. Drawdown (%)', fontsize=13)
+    ax3.set_ylabel('Drawdown (%)')
+    ax3.grid(True, alpha=0.3, axis='y', linestyle='--')
+    for bar, val in zip(bars, [vix_dd, sp500_dd]):
+        ax3.text(bar.get_x() + bar.get_width()/2., bar.get_height() + 2,
+                f'{val:.1f}%', ha='center', va='bottom', fontsize=10, fontweight='bold')
     
-    # Wenn es Series sind, den ersten Wert nehmen
-    if isinstance(vix_dd_val, pd.Series):
-        vix_dd_val = vix_dd_val.iloc[0]
-    if isinstance(sp500_dd_val, pd.Series):
-        sp500_dd_val = sp500_dd_val.iloc[0]
+    # 4. Gesamtrendite (Balken)
+    ax4 = fig.add_subplot(gs[1, 1])
+    bars = ax4.bar(['VIX', 'S&P 500'], [vix_return, sp500_return], 
+                   color=['#1f77b4', '#2ca02c'], edgecolor='black', linewidth=0.8)
+    ax4.set_title('Gesamtrendite (%)', fontsize=13)
+    ax4.set_ylabel('Rendite (%)')
+    ax4.grid(True, alpha=0.3, axis='y', linestyle='--')
+    for bar, val in zip(bars, [vix_return, sp500_return]):
+        ax4.text(bar.get_x() + bar.get_width()/2., bar.get_height() + 5,
+                f'{val:.1f}%', ha='center', va='bottom', fontsize=10, fontweight='bold')
     
-    vix_dd = float(vix_dd_val) * -100
-    sp500_dd = float(sp500_dd_val) * -100
-    bars = ax3.bar(['VIX-Strategie', 'S&P 500-Strategie'], 
-                   [vix_dd, sp500_dd],
-                   color=['blue', 'green'])
-    ax3.set_title('Max. Drawdown (%)', fontsize=12)
-    ax3.grid(True, alpha=0.3)
-    for bar, value in zip(bars, [vix_dd, sp500_dd]):
-        ax3.text(bar.get_x() + bar.get_width()/2., bar.get_height() + 1,
-                f'{value:.1f}%', ha='center', va='bottom')
-    
-    # 4. Positionsgrößen
-    ax4 = axes[1, 1]
+    # 5. Positionsgrößen (kleiner Plot)
+    ax5 = fig.add_subplot(gs[1, 2])
     common_dates = vix_signals.index.intersection(sp500_signals.index)
     if len(common_dates) > 0:
-        ax4.plot(vix_signals.loc[common_dates].index, 
-                 vix_signals.loc[common_dates]['position'], 
-                 label='VIX-Position', color='blue', alpha=0.7, linewidth=0.8)
-        ax4.plot(sp500_signals.loc[common_dates].index, 
-                 sp500_signals.loc[common_dates]['position'], 
-                 label='S&P 500-Position', color='green', alpha=0.7, linewidth=0.8)
+        # Nur jeden 20. Tag anzeigen für bessere Lesbarkeit
+        step = max(1, len(common_dates) // 200)
+        dates_sample = common_dates[::step]
+        ax5.plot(vix_signals.loc[dates_sample].index, 
+                 vix_signals.loc[dates_sample]['position'], 
+                 label='VIX', color='#1f77b4', alpha=0.7, linewidth=0.8)
+        ax5.plot(sp500_signals.loc[dates_sample].index, 
+                 sp500_signals.loc[dates_sample]['position'], 
+                 label='S&P 500', color='#2ca02c', alpha=0.7, linewidth=0.8)
     else:
-        ax4.plot(sp500_signals.index, sp500_signals['position'], 
-                 label='S&P 500-Position', color='green', alpha=0.7)
-    ax4.axhline(y=1.0, color='black', linestyle='--', alpha=0.3, label='100%')
-    ax4.axhline(y=0.0, color='red', linestyle='--', alpha=0.3, label='0%')
-    ax4.set_title('Positionsgrößen über die Zeit', fontsize=12)
-    ax4.legend(loc='upper left')
-    ax4.grid(True, alpha=0.3)
+        step = max(1, len(sp500_signals) // 200)
+        ax5.plot(sp500_signals.index[::step], sp500_signals['position'][::step], 
+                 label='S&P 500', color='#2ca02c', alpha=0.7)
+    ax5.axhline(y=1.0, color='black', linestyle='--', alpha=0.3, linewidth=0.8, label='100%')
+    ax5.axhline(y=0.0, color='red', linestyle='--', alpha=0.3, linewidth=0.8, label='0%')
+    ax5.set_title('Positionsgrößen (gefiltert)', fontsize=13)
+    ax5.set_xlabel('Datum')
+    ax5.set_ylabel('Position')
+    ax5.set_ylim(-0.05, 1.3)
+    ax5.legend(loc='upper left', fontsize=8)
+    ax5.grid(True, alpha=0.3, linestyle='--')
     
     plt.tight_layout()
-    plt.savefig(OUTPUT_DIR / 'sp500_comparison.png', dpi=150)
+    plt.savefig(OUTPUT_DIR / 'sp500_comparison_professional.png', dpi=200, bbox_inches='tight')
     plt.show()
-    print(f"💾 Grafik gespeichert: {OUTPUT_DIR / 'sp500_comparison.png'}")
+    print(f"💾 Professionelle Grafik gespeichert: {OUTPUT_DIR / 'sp500_comparison_professional.png'}")
 
 
 def print_performance_report(name: str, perf: dict):
