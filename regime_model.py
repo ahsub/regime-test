@@ -292,15 +292,22 @@ def print_summary(res: object, regime_df: pd.DataFrame):
     for i, label in enumerate(regime_df['label']):
         print(f"   {label}: {frequencies[i]:.1%}")
     
-    # Wahrscheinlichkeiten speichern (damit die CSV erstellt wird)
-    try:
-        prob_df = pd.DataFrame(prob_array, 
-                               index=res.model.data.endog.index, 
-                               columns=regime_df['label'].tolist())
-        prob_df.to_csv(OUTPUT_DIR / 'regime_probabilities.csv')
-        print(f"\n💾 Wahrscheinlichkeiten gespeichert: {OUTPUT_DIR / 'regime_probabilities.csv'}")
-    except Exception as e:
-        print(f"   ⚠️ CSV konnte nicht gespeichert werden: {e}")
+    # Wahrscheinlichkeiten speichern (korrigierte Version)
+try:
+    # Index aus den Originaldaten holen
+    if hasattr(res.model.data, 'endog'):
+        index = res.model.data.endog.index
+    else:
+        # Fallback: fortlaufender Index
+        index = range(len(prob_array))
+    
+    prob_df = pd.DataFrame(prob_array, 
+                           index=index, 
+                           columns=regime_df['label'].tolist())
+    prob_df.to_csv(OUTPUT_DIR / 'regime_probabilities.csv')
+    print(f"\n💾 Wahrscheinlichkeiten gespeichert: {OUTPUT_DIR / 'regime_probabilities.csv'}")
+except Exception as e:
+    print(f"   ⚠️ CSV konnte nicht gespeichert werden: {e}")
 
 
 # =============================================================================
