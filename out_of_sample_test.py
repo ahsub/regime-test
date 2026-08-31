@@ -130,22 +130,26 @@ def calculate_performance(signals: pd.DataFrame, returns: pd.Series) -> dict:
     peak = strategy_cum.expanding().max()
     drawdown = (strategy_cum - peak) / peak
     
-    # KORREKTUR: .iloc[-1] kann ein Series sein – wir extrahieren den Wert
-    def safe_last_value(series):
-        if len(series) == 0:
-            return 0.0
-        val = series.iloc[-1]
-        if isinstance(val, pd.Series):
-            return float(val.iloc[0]) if len(val) > 0 else 0.0
-        return float(val)
+    # Hilfsfunktion: sicher einen einzelnen Float-Wert extrahieren
+    def safe_float(value):
+        if isinstance(value, pd.Series):
+            return float(value.iloc[0]) if len(value) > 0 else 0.0
+        return float(value)
+    
+    # Alle Werte sicher extrahieren
+    total_return_strategy = safe_float(strategy_cum.iloc[-1]) - 1 if len(strategy_cum) > 0 else 0.0
+    total_return_market = safe_float(market_cum.iloc[-1]) - 1 if len(market_cum) > 0 else 0.0
+    max_drawdown = safe_float(drawdown.min()) if len(drawdown) > 0 else 0.0
+    avg_position = safe_float(signals_aligned['position'].mean()) if len(signals_aligned) > 0 else 0.0
+    sharpe_ratio = safe_float(sharpe)
     
     return {
-        'total_return_strategy': safe_last_value(strategy_cum) - 1,
-        'total_return_market': safe_last_value(market_cum) - 1,
-        'sharpe_ratio': float(sharpe),
-        'max_drawdown': float(drawdown.min()) if len(drawdown) > 0 else 0.0,
+        'total_return_strategy': total_return_strategy,
+        'total_return_market': total_return_market,
+        'sharpe_ratio': sharpe_ratio,
+        'max_drawdown': max_drawdown,
         'num_trades': int((signals_aligned['position'] != signals_aligned['position'].shift(1)).sum()),
-        'avg_position': float(signals_aligned['position'].mean()) if len(signals_aligned) > 0 else 0.0,
+        'avg_position': avg_position,
         'n_days': len(signals_aligned)
     }
 
