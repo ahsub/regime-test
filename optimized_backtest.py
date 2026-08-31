@@ -182,6 +182,12 @@ def plot_comparison(perf_optimized: dict, perf_previous: dict,
     """
     Vergleicht die Performance der optimierten vs. vorherigen Strategie.
     """
+    # Hilfsfunktion: Extrahiert einen einzelnen Wert
+    def safe_float(value):
+        if isinstance(value, pd.Series):
+            return float(value.iloc[0]) if len(value) > 0 else 0.0
+        return float(value)
+    
     fig, axes = plt.subplots(2, 2, figsize=(14, 10))
     
     # 1. Kumulierte Renditen
@@ -198,7 +204,11 @@ def plot_comparison(perf_optimized: dict, perf_previous: dict,
     
     # 2. Sharpe Ratio Vergleich
     ax2 = axes[0, 1]
-    sharpe_values = [perf_previous['sharpe_ratio'], perf_optimized['sharpe_ratio']]
+    # KORREKTUR: Werte einzeln extrahieren
+    sharpe_prev = safe_float(perf_previous['sharpe_ratio'])
+    sharpe_opt = safe_float(perf_optimized['sharpe_ratio'])
+    sharpe_values = [sharpe_prev, sharpe_opt]
+    
     bars = ax2.bar(['Vorherige', 'Optimiert'], sharpe_values, 
                    color=['blue', 'green'], edgecolor='black', linewidth=0.8)
     ax2.axhline(y=0.5, color='red', linestyle='--', alpha=0.7, label='Schwelle 0.5')
@@ -212,10 +222,11 @@ def plot_comparison(perf_optimized: dict, perf_previous: dict,
     
     # 3. Drawdown
     ax3 = axes[1, 0]
-    dd_values = [
-        perf_previous['max_drawdown'] * -100,
-        perf_optimized['max_drawdown'] * -100
-    ]
+    # KORREKTUR: Drawdown-Werte einzeln extrahieren
+    dd_prev = safe_float(perf_previous['max_drawdown']) * -100
+    dd_opt = safe_float(perf_optimized['max_drawdown']) * -100
+    dd_values = [dd_prev, dd_opt]
+    
     bars = ax3.bar(['Vorherige', 'Optimiert'], dd_values, 
                    color=['blue', 'green'], edgecolor='black', linewidth=0.8)
     ax3.set_title('Max. Drawdown (%)', fontsize=12)
