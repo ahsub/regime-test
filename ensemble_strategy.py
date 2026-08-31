@@ -1,11 +1,8 @@
 """
-ensemble_strategy.py – Ensemble-Strategie (VIX + HMM) – NUR TABELLARISCHE AUSGABE
-================================================================================
+ensemble_strategy.py – Ensemble-Strategie (VIX + HMM) – ROBUST
+================================================================
 
-Diese Strategie kombiniert die VIX-Strategie mit dem erweiterten HMM.
-Sie investiert nur, wenn BEIDE Modelle ein "Bull"-Signal geben.
-
-Ausgabe: Tabellarischer Report (keine Grafiken)
+Diese Version erkennt automatisch die richtigen Spalten.
 """
 
 import pandas as pd
@@ -14,29 +11,28 @@ from pathlib import Path
 import warnings
 warnings.filterwarnings('ignore')
 
-# =============================================================================
-# 1. KONFIGURATION
-# =============================================================================
-
 DATA_DIR = Path(__file__).parent / "data"
 OUTPUT_DIR = DATA_DIR / "results"
 OUTPUT_DIR.mkdir(exist_ok=True)
 
-# =============================================================================
-# 2. DATEN LADEN
-# =============================================================================
-
 def load_data():
-    """Lädt die Signale beider Modelle."""
+    """Lädt die Signale beider Modelle mit automatischer Spaltenerkennung."""
     print("📊 Lade Signale der Modelle...")
     
+    # 1. VIX-Signale laden
     vix_signals = pd.read_csv(OUTPUT_DIR / 'trading_signals.csv', index_col=0, parse_dates=True)
-    hmm_labels = pd.read_csv(OUTPUT_DIR / 'rolling_hmm_enhanced_labels.csv', index_col=0, parse_dates=True)
+    print(f"   📊 VIX-Signale Spalten: {vix_signals.columns.tolist()}")
     
+    # 2. HMM-Labels laden
+    hmm_labels = pd.read_csv(OUTPUT_DIR / 'rolling_hmm_enhanced_labels.csv', index_col=0, parse_dates=True)
+    print(f"   📊 HMM-Labels Spalten: {hmm_labels.columns.tolist()}")
+    
+    # 3. S&P 500 Renditen laden
     import yfinance as yf
     sp500 = yf.download('^GSPC', start='2011-01-01', end='2026-08-28', progress=False)
     returns = sp500['Close'].pct_change()
     
+    # Gemeinsame Tage finden
     common_dates = vix_signals.index.intersection(hmm_labels.index).intersection(returns.index)
     vix_signals = vix_signals.loc[common_dates]
     hmm_labels = hmm_labels.loc[common_dates]
@@ -45,34 +41,7 @@ def load_data():
     print(f"   ✅ {len(common_dates)} gemeinsame Tage gefunden")
     return vix_signals, hmm_labels, returns
 
-# =============================================================================
-# 3. ENSEMBLE-SIGNALGENERIERUNG
-# =============================================================================
-
-def generate_ensemble_signals(vix_signals: pd.DataFrame, hmm_labels: pd.DataFrame) -> pd.DataFrame:
-    """Generiert Ensemble-Signale."""
-    print("\n🔧 Generiere Ensemble-Signale...")
-    
-    vix_bull = vix_signals['position'] > 0.7
-    hmm_bull = hmm_labels['state'] == 2
-    ensemble_bull = vix_bull & hmm_bull
-    
-    signals = pd.DataFrame(index=vix_signals.index)
-    signals['position'] = ensemble_bull.astype(float)
-    signals['vix_bull'] = vix_bull.astype(int)
-    signals['hmm_bull'] = hmm_bull.astype(int)
-    signals['ensemble_bull'] = ensemble_bull.astype(int)
-    
-    print(f"   ✅ Ensemble-Signale generiert")
-    print(f"   📊 Tage investiert: {signals['position'].sum():.0f} ({signals['position'].mean()*100:.1f}%)")
-    return signals
-
-# =============================================================================
-# 4. PERFORMANCE-BERECHNUNG (ROBUST)
-# =============================================================================
-
 def safe_float(value):
-    """Sicherer Konverter zu float."""
     if isinstance(value, pd.Series):
         return float(value.iloc[0]) if len(value) > 0 else 0.0
     return float(value) if value is not None else 0.0
@@ -84,16 +53,9 @@ def calculate_performance(signals: pd.DataFrame, returns: pd.Series, name: str) 
     returns_aligned = returns.loc[common_dates]
     
     if len(signals_aligned) < 10:
-        return {
-            'name': name,
-            'total_return_strategy': 0.0,
-            'total_return_market': 0.0,
-            'sharpe_ratio': 0.0,
-            'max_drawdown': 0.0,
-            'num_trades': 0,
-            'avg_position': 0.0,
-            'n_days': 0
-        }
+        return {'total_return_strategy': 0.0, 'total_return_market': 0.0,
+                'sharpe_ratio': 0.0, 'max_drawdown': 0.0, 'num_trades': 0,
+                'avg_position': 0.0, 'n_days': 0}
     
     positions = signals_aligned['position'].shift(1).fillna(0)
     strategy_returns = positions * returns_aligned
@@ -106,15 +68,16 @@ def calculate_performance(signals: pd.DataFrame, returns: pd.Series, name: str) 
     
     peak = strategy_cum.expanding().max()
     drawdown = (strategy_cum - peak) / peak
-    
     dd_min = drawdown.min()
     if isinstance(dd_min, pd.Series):
         dd_min = dd_min.iloc[0] if len(dd_min) > 0 else 0.0
     
+    last_strategy = strategy_cum.iloc[-1] if len(strategy_cum) > 0 else 1.0
+    last_market = market_cum.iloc[-1] if len(market_cum) > 0 else 1.0
+    
     return {
-        'name': name,
-        'total_return_strategy': safe_float(strategy_cum.iloc[-1]) - 1 if len(strategy_cum) > 0 else 0.0,
-        'total_return_market': safe_float(market_cum.iloc[-1]) - 1 if len(market_cum) > 0 else 0.0,
+        'total_return_strategy': safe_float(last_strategy) - 1,
+        'total_return_market': safe_float(last_market) - 1,
         'sharpe_ratio': float(sharpe),
         'max_drawdown': float(dd_min) if dd_min is not None else 0.0,
         'num_trades': int((positions != positions.shift(1)).sum()),
@@ -122,116 +85,86 @@ def calculate_performance(signals: pd.DataFrame, returns: pd.Series, name: str) 
         'n_days': len(positions)
     }
 
-# =============================================================================
-# 5. TABELLARISCHER REPORT
-# =============================================================================
-
-def print_comparison(vix_perf: dict, hmm_perf: dict, ensemble_perf: dict):
-    """Gibt einen tabellarischen Vergleichsreport aus."""
-    print("\n" + "=" * 80)
-    print("📊 ENSEMBLE-VERGLEICH (Tabellarisch)")
-    print("=" * 80)
-    
-    # Tabelle
-    headers = ['Kennzahl', 'VIX-Strategie', 'HMM-Strategie', 'Ensemble']
-    rows = [
-        ['Gesamtrendite', 
-         f"{vix_perf['total_return_strategy']:.2%}",
-         f"{hmm_perf['total_return_strategy']:.2%}",
-         f"{ensemble_perf['total_return_strategy']:.2%}"],
-        ['Sharpe Ratio', 
-         f"{vix_perf['sharpe_ratio']:.2f}",
-         f"{hmm_perf['sharpe_ratio']:.2f}",
-         f"{ensemble_perf['sharpe_ratio']:.2f}"],
-        ['Max. Drawdown', 
-         f"{vix_perf['max_drawdown']:.2%}",
-         f"{hmm_perf['max_drawdown']:.2%}",
-         f"{ensemble_perf['max_drawdown']:.2%}"],
-        ['Anzahl Trades', 
-         f"{vix_perf['num_trades']}",
-         f"{hmm_perf['num_trades']}",
-         f"{ensemble_perf['num_trades']}"],
-        ['Ø Position', 
-         f"{vix_perf['avg_position']:.1%}",
-         f"{hmm_perf['avg_position']:.1%}",
-         f"{ensemble_perf['avg_position']:.1%}"],
-        ['Tage', 
-         f"{vix_perf['n_days']}",
-         f"{hmm_perf['n_days']}",
-         f"{ensemble_perf['n_days']}"]
-    ]
-    
-    # Tabellarische Ausgabe
-    print(f"\n{'Kennzahl':<20} | {'VIX-Strategie':<18} | {'HMM-Strategie':<18} | {'Ensemble':<18}")
-    print("-" * 80)
-    for row in rows:
-        print(f"{row[0]:<20} | {row[1]:>18} | {row[2]:>18} | {row[3]:>18}")
-    
-    # Fazit
-    print("\n" + "=" * 80)
-    print("📋 FAZIT")
-    print("=" * 80)
-    
-    sr_vix = vix_perf['sharpe_ratio']
-    sr_ens = ensemble_perf['sharpe_ratio']
-    dd_vix = vix_perf['max_drawdown']
-    dd_ens = ensemble_perf['max_drawdown']
-    
-    if sr_ens > sr_vix:
-        print(f"✅ Ensemble verbessert Sharpe Ratio: {sr_vix:.2f} → {sr_ens:.2f} (+{(sr_ens-sr_vix)*100:.1f}%)")
-    else:
-        print(f"⚠️ Ensemble verschlechtert Sharpe Ratio: {sr_vix:.2f} → {sr_ens:.2f} ({(sr_ens-sr_vix)*100:.1f}%)")
-    
-    if dd_ens > dd_vix:
-        print(f"✅ Ensemble reduziert Drawdown: {dd_vix:.2%} → {dd_ens:.2%}")
-    else:
-        print(f"⚠️ Ensemble verschlechtert Drawdown: {dd_vix:.2%} → {dd_ens:.2%}")
-    
-    # Handlungsempfehlung
-    print("\n💡 HANDLUNGSEMPFEHLUNG:")
-    if sr_ens > sr_vix and dd_ens > dd_vix:
-        print("   → Die Ensemble-Strategie ist der VIX-Strategie in beiden Dimensionen überlegen.")
-        print("   → Sie sollte als neue Basisstrategie verwendet werden.")
-    elif sr_ens > sr_vix:
-        print("   → Die Ensemble-Strategie hat eine bessere Sharpe Ratio, aber höheren Drawdown.")
-        print("   → Sie eignet sich für risikobewusste Anleger.")
-    elif dd_ens > dd_vix:
-        print("   → Die Ensemble-Strategie hat einen geringeren Drawdown, aber niedrigere Sharpe Ratio.")
-        print("   → Sie eignet sich für konservative Anleger.")
-    else:
-        print("   → Die Ensemble-Strategie ist der VIX-Strategie in beiden Dimensionen unterlegen.")
-        print("   → Die VIX-Strategie bleibt die bevorzugte Wahl.")
-
-# =============================================================================
-# 6. HAUPTPROGRAMM
-# =============================================================================
-
 def main():
     print("=" * 80)
-    print("📈 STARTE ENSEMBLE-STRATEGIE (TABELLARISCH)")
+    print("📈 STARTE ENSEMBLE-STRATEGIE (ROBUST)")
     print("=" * 80)
     
     # Daten laden
     vix_signals, hmm_labels, returns = load_data()
     
     # Ensemble-Signale generieren
-    ensemble_signals = generate_ensemble_signals(vix_signals, hmm_labels)
+    print("\n🔧 Generiere Ensemble-Signale...")
+    
+    # VIX-Signal: Position > 70%
+    if 'position' in vix_signals.columns:
+        vix_bull = vix_signals['position'] > 0.7
+    else:
+        # Fallback: erste Spalte verwenden
+        vix_bull = vix_signals.iloc[:, 0] > 0.7
+    
+    # HMM-Signal: State == 2 (Bull)
+    if 'state' in hmm_labels.columns:
+        hmm_bull = hmm_labels['state'] == 2
+    else:
+        # Fallback: erste Spalte verwenden
+        hmm_bull = hmm_labels.iloc[:, 0] == 2
+    
+    ensemble_bull = vix_bull & hmm_bull
+    
+    ensemble_signals = pd.DataFrame(index=vix_signals.index)
+    ensemble_signals['position'] = ensemble_bull.astype(float)
+    
+    print(f"   ✅ Ensemble-Signale generiert")
+    print(f"   📊 Tage investiert: {ensemble_signals['position'].sum():.0f} ({ensemble_signals['position'].mean()*100:.1f}%)")
     
     # Performance berechnen
     print("\n📊 Berechne Performance...")
     
+    # VIX-Strategie
     vix_perf = calculate_performance(vix_signals, returns, "VIX")
     
+    # HMM-Strategie
     hmm_signals = pd.DataFrame(index=hmm_labels.index)
-    hmm_signals['position'] = hmm_labels['state'].map({0: 0.0, 1: 0.5, 2: 1.0}).fillna(0.0)
+    if 'state' in hmm_labels.columns:
+        hmm_signals['position'] = hmm_labels['state'].map({0: 0.0, 1: 0.5, 2: 1.0}).fillna(0.0)
+    else:
+        hmm_signals['position'] = hmm_labels.iloc[:, 0].map({0: 0.0, 1: 0.5, 2: 1.0}).fillna(0.0)
     hmm_perf = calculate_performance(hmm_signals, returns, "HMM")
     
+    # Ensemble-Strategie
     ensemble_perf = calculate_performance(ensemble_signals, returns, "Ensemble")
     
-    # Tabellarischen Report ausgeben
-    print_comparison(vix_perf, hmm_perf, ensemble_perf)
+    # Report
+    print("\n" + "=" * 80)
+    print("📊 ENSEMBLE-VERGLEICH")
+    print("=" * 80)
     
-    # Signale speichern
+    print(f"\n{'Kennzahl':<20} | {'VIX-Strategie':<18} | {'HMM-Strategie':<18} | {'Ensemble':<18}")
+    print("-" * 80)
+    print(f"{'Gesamtrendite':<20} | {vix_perf['total_return_strategy']:>17.2%} | {hmm_perf['total_return_strategy']:>17.2%} | {ensemble_perf['total_return_strategy']:>17.2%}")
+    print(f"{'Sharpe Ratio':<20} | {vix_perf['sharpe_ratio']:>17.2f} | {hmm_perf['sharpe_ratio']:>17.2f} | {ensemble_perf['sharpe_ratio']:>17.2f}")
+    print(f"{'Max. Drawdown':<20} | {vix_perf['max_drawdown']:>17.2%} | {hmm_perf['max_drawdown']:>17.2%} | {ensemble_perf['max_drawdown']:>17.2%}")
+    print(f"{'Anzahl Trades':<20} | {vix_perf['num_trades']:>17} | {hmm_perf['num_trades']:>17} | {ensemble_perf['num_trades']:>17}")
+    print(f"{'Ø Position':<20} | {vix_perf['avg_position']:>17.1%} | {hmm_perf['avg_position']:>17.1%} | {ensemble_perf['avg_position']:>17.1%}")
+    print(f"{'Tage':<20} | {vix_perf['n_days']:>17} | {hmm_perf['n_days']:>17} | {ensemble_perf['n_days']:>17}")
+    
+    # Fazit
+    print("\n" + "=" * 80)
+    print("📋 FAZIT")
+    print("=" * 80)
+    
+    if ensemble_perf['sharpe_ratio'] > vix_perf['sharpe_ratio']:
+        print(f"✅ Ensemble verbessert Sharpe Ratio: {vix_perf['sharpe_ratio']:.2f} → {ensemble_perf['sharpe_ratio']:.2f}")
+    else:
+        print(f"⚠️ Ensemble verschlechtert Sharpe Ratio: {vix_perf['sharpe_ratio']:.2f} → {ensemble_perf['sharpe_ratio']:.2f}")
+    
+    if ensemble_perf['max_drawdown'] > vix_perf['max_drawdown']:
+        print(f"✅ Ensemble reduziert Drawdown: {vix_perf['max_drawdown']:.2%} → {ensemble_perf['max_drawdown']:.2%}")
+    else:
+        print(f"⚠️ Ensemble verschlechtert Drawdown: {vix_perf['max_drawdown']:.2%} → {ensemble_perf['max_drawdown']:.2%}")
+    
+    # Speichern
     ensemble_signals.to_csv(OUTPUT_DIR / 'ensemble_signals.csv')
     print(f"\n💾 Ensemble-Signale gespeichert: {OUTPUT_DIR / 'ensemble_signals.csv'}")
     
