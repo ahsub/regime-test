@@ -1,14 +1,6 @@
 """
 rolling_hmm_enhanced.py – Rolling HMM mit erweiterten Features (VIX, VVIX, GEX, DIX)
 ====================================================================================
-
-Dieses Skript erweitert das Rolling-HMM nach Pagliaro (2026) um zusätzliche Features:
-- VIX (Volatilitätsindex)
-- VVIX (Volatilität der Volatilität)
-- GEX (Gamma Exposure)
-- DIX (Dark Index)
-
-Ziel: Verbesserung der Sharpe Ratio durch zusätzliche Informationsquellen.
 """
 
 import pandas as pd
@@ -29,13 +21,12 @@ DATA_DIR = Path(__file__).parent / "data"
 OUTPUT_DIR = DATA_DIR / "results"
 OUTPUT_DIR.mkdir(exist_ok=True)
 
-# Parameter
-RETRAIN_INTERVAL = 63          # Alle 63 Handelstage neu fitten
-CONTEXT_WINDOW = 120           # 120-Tage-Kontextfenster für Viterbi
-N_REGIMES = 3                  # Bull / Sideways / Bear
+RETRAIN_INTERVAL = 63
+CONTEXT_WINDOW = 120
+N_REGIMES = 3
 
 # =============================================================================
-# 2. DATEN LADEN
+# 2. DATEN LADEN (KORRIGIERT)
 # =============================================================================
 
 def load_data():
@@ -49,18 +40,19 @@ def load_data():
     # 2. VIX
     vix = pd.read_csv(DATA_DIR / "VIX_History.csv", parse_dates=['DATE'])
     vix = vix.set_index('DATE').sort_index()
-    vix = vix['CLOSE']
+    vix_close_col = next((col for col in vix.columns if col.upper() in ['CLOSE', 'VALUE']), vix.columns[0])
+    vix = vix[vix_close_col]
     
-    # 3. VVIX (Volatilität der Volatilität)
+    # 3. VVIX
     vvix = pd.read_csv(DATA_DIR / "VVIX_History.csv", parse_dates=['DATE'])
     vvix = vvix.set_index('DATE').sort_index()
-    vvix = vvix['CLOSE']
+    vvix_close_col = next((col for col in vvix.columns if col.upper() in ['CLOSE', 'VALUE']), vvix.columns[0])
+    vvix = vvix[vvix_close_col]
     
-    # 4. GEX & DIX (von SqueezeMetrics)
+    # 4. GEX & DIX
     dix = pd.read_csv(DATA_DIR / "DIX.csv", parse_dates=['date'])
     dix = dix.set_index('date').sort_index()
     
-    # Spaltennamen normalisieren
     if 'DIX' in dix.columns:
         dix_data = dix['DIX']
     elif 'dix' in dix.columns:
@@ -75,7 +67,7 @@ def load_data():
     else:
         gex_data = pd.Series(index=dix.index, data=np.nan)
     
-    # 5. Alle Daten zusammenführen
+    # 5. Zusammenführen
     df = pd.DataFrame(index=sp500.index)
     df['returns'] = returns
     df['vix'] = vix.reindex(df.index, method='ffill')
@@ -83,37 +75,17 @@ def load_data():
     df['gex'] = gex_data.reindex(df.index, method='ffill')
     df['dix'] = dix_data.reindex(df.index, method='ffill')
     
-    # 6. Features für das HMM (normalisiert)
-    # Rendite-Features
-    df['feature_returns'] = returns.rolling(20).mean()  # 20-Tage-Rendite
-    df['feature_volatility'] = returns.rolling(20).std() * np.sqrt(252)  # 20-Tage-Volatilität
-    
-    # VIX-Features
+    # 6. Features
+    df['feature_returns'] = returns.rolling(20).mean()
+    df['feature_volatility'] = returns.rolling(20).std() * np.sqrt(252)
     df['feature_vix'] = df['vix']
-    df['feature_vix_delta'] = df['vix'].pct_change().rolling(5).mean()  # VIX-Änderung (geglättet)
     df['feature_vvix'] = df['vvix']
-    
-    # GEX-Features
-    df['feature_gex'] = df['gex'] / 1e9  # Skalierung in Milliarden
-    df['feature_gex_delta'] = df['gex'].pct_change().rolling(5).mean() / 1e9
-    
-    # DIX-Features
+    df['feature_gex'] = df['gex'] / 1e9
     df['feature_dix'] = df['dix']
-    df['feature_dix_delta'] = df['dix'].pct_change().rolling(5).mean()
     
-    # 7. Alle Features für das HMM (nur die, die wir verwenden)
-    # Wir verwenden: returns, volatility, vix, vvix, gex, dix
-    feature_columns = [
-        'feature_returns',
-        'feature_volatility',
-        'feature_vix',
-        'feature_vvix',
-        'feature_gex',
-        'feature_dix'
-    ]
-    
-    # Standardisierung der Features (Z-Score)
-    for col in feature_columns:
+    # 7. Standardisierung
+    feature_cols = ['feature_returns', 'feature_volatility', 'feature_vix', 'feature_vvix', 'feature_gex', 'feature_dix']
+    for col in feature_cols:
         mean = df[col].mean()
         std = df[col].std()
         if std > 0:
@@ -132,7 +104,7 @@ def load_data():
 # =============================================================================
 
 def prepare_training_data(df: pd.DataFrame, end_idx: int) -> np.ndarray:
-    """Bereitet die Trainingsdaten für das HMM vor (nur Vergangenheit)."""
+    """Bereitet die Trainingsdaten für das HMM vor."""
     feature_cols = [
         'feature_returns_std',
         'feature_volatility_std',
@@ -141,7 +113,6 @@ def prepare_training_data(df: pd.DataFrame, end_idx: int) -> np.ndarray:
         'feature_gex_std',
         'feature_dix_std'
     ]
-    
     train_df = df.iloc[:end_idx]
     features = np.column_stack([train_df[col].values for col in feature_cols])
     return features
@@ -151,9 +122,7 @@ def prepare_training_data(df: pd.DataFrame, end_idx: int) -> np.ndarray:
 # =============================================================================
 
 def run_rolling_hmm(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Führt das Rolling-HMM mit erweiterten Features durch.
-    """
+    """Führt das Rolling-HMM mit erweiterten Features durch."""
     print("\n🧠 Starte Rolling-HMM (erweitert)...")
     print(f"   Retrain-Intervall: {RETRAIN_INTERVAL} Tage")
     print(f"   Kontextfenster:    {CONTEXT_WINDOW} Tage")
@@ -168,10 +137,8 @@ def run_rolling_hmm(df: pd.DataFrame) -> pd.DataFrame:
     for i in range(CONTEXT_WINDOW, n):
         train_end = i
         
-        # Retrain alle 63 Tage
         if (i - CONTEXT_WINDOW) % RETRAIN_INTERVAL == 0 or i == CONTEXT_WINDOW:
             train_data = prepare_training_data(df, train_end)
-            
             if len(train_data) < CONTEXT_WINDOW:
                 continue
             
@@ -197,7 +164,6 @@ def run_rolling_hmm(df: pd.DataFrame) -> pd.DataFrame:
         if model is None:
             continue
         
-        # Viterbi-Decodierung auf Kontextfenster
         try:
             context_data = prepare_training_data(df, i)
             if len(context_data) < CONTEXT_WINDOW:
@@ -222,7 +188,6 @@ def run_rolling_hmm(df: pd.DataFrame) -> pd.DataFrame:
     
     results_df = pd.DataFrame(results)
     results_df = results_df.set_index('date')
-    
     return results_df
 
 # =============================================================================
@@ -230,14 +195,11 @@ def run_rolling_hmm(df: pd.DataFrame) -> pd.DataFrame:
 # =============================================================================
 
 def calculate_performance(results_df: pd.DataFrame, returns: pd.Series) -> dict:
-    """
-    Berechnet die Performance der HMM-basierten Strategie.
-    """
+    """Berechnet die Performance der Strategie."""
     common_dates = results_df.index.intersection(returns.index)
     results_aligned = results_df.loc[common_dates]
     returns_aligned = returns.loc[common_dates]
     
-    # HMM-Regime: 0=Bear (0% Position), 1=Sideways (50%), 2=Bull (100%)
     position_map = {0: 0.0, 1: 0.5, 2: 1.0}
     positions = results_aligned['state'].map(position_map).fillna(0.0)
     
@@ -266,7 +228,6 @@ def calculate_performance(results_df: pd.DataFrame, returns: pd.Series) -> dict:
 # =============================================================================
 
 def save_results(results_df: pd.DataFrame, perf: dict):
-    """Speichert die Ergebnisse."""
     results_df.to_csv(OUTPUT_DIR / 'rolling_hmm_enhanced_labels.csv')
     print(f"💾 Regime-Labels gespeichert: {OUTPUT_DIR / 'rolling_hmm_enhanced_labels.csv'}")
     
@@ -275,7 +236,6 @@ def save_results(results_df: pd.DataFrame, perf: dict):
     print(f"💾 Metriken gespeichert: {OUTPUT_DIR / 'rolling_hmm_enhanced_metrics.json'}")
 
 def print_report(perf: dict):
-    """Gibt einen tabellarischen Report aus."""
     print("\n" + "=" * 60)
     print("📊 ROLLING-HMM (ERWEITERT) PERFORMANCE-REPORT")
     print("=" * 60)
@@ -307,7 +267,6 @@ def main():
     print("\n" + "=" * 60)
     print("🏁 ROLLING-HMM (ERWEITERT) ABGESCHLOSSEN")
     print("=" * 60)
-    print("💡 Nächster Schritt: Ergebnisse mit dem einfachen HMM vergleichen.")
 
 if __name__ == "__main__":
     main()
