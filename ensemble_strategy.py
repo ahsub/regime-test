@@ -1,8 +1,6 @@
 """
-ensemble_strategy.py – Ensemble-Strategie (VIX + HMM) – ROBUST
-================================================================
-
-Diese Version erkennt automatisch die richtigen Spalten.
+ensemble_strategy.py – Ensemble-Strategie (VIX + HMM) – KORRIGIERT
+==================================================================
 """
 
 import pandas as pd
@@ -16,7 +14,7 @@ OUTPUT_DIR = DATA_DIR / "results"
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 def load_data():
-    """Lädt die Signale beider Modelle mit automatischer Spaltenerkennung."""
+    """Lädt die Signale beider Modelle und die Renditen."""
     print("📊 Lade Signale der Modelle...")
     
     # 1. VIX-Signale laden
@@ -27,10 +25,19 @@ def load_data():
     hmm_labels = pd.read_csv(OUTPUT_DIR / 'rolling_hmm_enhanced_labels.csv', index_col=0, parse_dates=True)
     print(f"   📊 HMM-Labels Spalten: {hmm_labels.columns.tolist()}")
     
-    # 3. S&P 500 Renditen laden
-    import yfinance as yf
-    sp500 = yf.download('^GSPC', start='2011-01-01', end='2026-08-28', progress=False)
-    returns = sp500['Close'].pct_change()
+    # 3. Renditen aus market_data.csv laden (SP500_returns)
+    market_data = pd.read_csv(DATA_DIR / "market_data.csv", index_col=0, parse_dates=True)
+    
+    # Prüfen, ob SP500_returns existiert
+    if 'SP500_returns' in market_data.columns:
+        returns = market_data['SP500_returns'].dropna()
+        print(f"   ✅ SP500_returns aus market_data.csv geladen: {len(returns)} Tage")
+    else:
+        # Fallback: Yahoo Finance
+        import yfinance as yf
+        sp500 = yf.download('^GSPC', start='2011-01-01', end='2026-08-28', progress=False)
+        returns = sp500['Close'].pct_change()
+        print(f"   ✅ S&P 500 von Yahoo Finance geladen: {len(returns)} Tage")
     
     # Gemeinsame Tage finden
     common_dates = vix_signals.index.intersection(hmm_labels.index).intersection(returns.index)
@@ -87,7 +94,7 @@ def calculate_performance(signals: pd.DataFrame, returns: pd.Series, name: str) 
 
 def main():
     print("=" * 80)
-    print("📈 STARTE ENSEMBLE-STRATEGIE (ROBUST)")
+    print("📈 STARTE ENSEMBLE-STRATEGIE (KORRIGIERT)")
     print("=" * 80)
     
     # Daten laden
@@ -96,20 +103,8 @@ def main():
     # Ensemble-Signale generieren
     print("\n🔧 Generiere Ensemble-Signale...")
     
-    # VIX-Signal: Position > 70%
-    if 'position' in vix_signals.columns:
-        vix_bull = vix_signals['position'] > 0.7
-    else:
-        # Fallback: erste Spalte verwenden
-        vix_bull = vix_signals.iloc[:, 0] > 0.7
-    
-    # HMM-Signal: State == 2 (Bull)
-    if 'state' in hmm_labels.columns:
-        hmm_bull = hmm_labels['state'] == 2
-    else:
-        # Fallback: erste Spalte verwenden
-        hmm_bull = hmm_labels.iloc[:, 0] == 2
-    
+    vix_bull = vix_signals['position'] > 0.7
+    hmm_bull = hmm_labels['state'] == 2
     ensemble_bull = vix_bull & hmm_bull
     
     ensemble_signals = pd.DataFrame(index=vix_signals.index)
@@ -121,18 +116,12 @@ def main():
     # Performance berechnen
     print("\n📊 Berechne Performance...")
     
-    # VIX-Strategie
     vix_perf = calculate_performance(vix_signals, returns, "VIX")
     
-    # HMM-Strategie
     hmm_signals = pd.DataFrame(index=hmm_labels.index)
-    if 'state' in hmm_labels.columns:
-        hmm_signals['position'] = hmm_labels['state'].map({0: 0.0, 1: 0.5, 2: 1.0}).fillna(0.0)
-    else:
-        hmm_signals['position'] = hmm_labels.iloc[:, 0].map({0: 0.0, 1: 0.5, 2: 1.0}).fillna(0.0)
+    hmm_signals['position'] = hmm_labels['state'].map({0: 0.0, 1: 0.5, 2: 1.0}).fillna(0.0)
     hmm_perf = calculate_performance(hmm_signals, returns, "HMM")
     
-    # Ensemble-Strategie
     ensemble_perf = calculate_performance(ensemble_signals, returns, "Ensemble")
     
     # Report
