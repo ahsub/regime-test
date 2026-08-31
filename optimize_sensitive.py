@@ -165,15 +165,32 @@ def run_optimization(prob_df: pd.DataFrame, returns: pd.Series) -> pd.DataFrame:
 
 def save_and_report(results_df: pd.DataFrame):
     """Speichert die Ergebnisse und gibt einen Report aus."""
+    # Hilfsfunktion: sicher einen einzelnen Wert extrahieren
+    def safe_value(value):
+        if isinstance(value, pd.Series):
+            return value.iloc[0] if len(value) > 0 else 0.0
+        return value
+    
     best = results_df.iloc[0]
+    
+    # Alle Werte sicher extrahieren
+    sharpe = safe_value(best['sharpe_ratio'])
+    total_return = safe_value(best['total_return'])
+    bull_quiet = safe_value(best['bull_quiet'])
+    stress = safe_value(best['stress'])
+    bull_fragile = safe_value(best['bull_fragile'])
+    reversion = safe_value(best['reversion'])
+    conf_days = safe_value(best['confirmation_days'])
+    num_trades = safe_value(best['num_trades'])
+    avg_position = safe_value(best['avg_position'])
     
     # JSON speichern
     best_params = {
-        'bull_quiet': float(best['bull_quiet']),
-        'stress': float(best['stress']),
-        'bull_fragile': float(best['bull_fragile']),
-        'reversion': float(best['reversion']),
-        'confirmation_days': int(best['confirmation_days'])
+        'bull_quiet': float(bull_quiet),
+        'stress': float(stress),
+        'bull_fragile': float(bull_fragile),
+        'reversion': float(reversion),
+        'confirmation_days': int(conf_days)
     }
     
     with open(OUTPUT_DIR / 'sensitive_best_params.json', 'w') as f:
@@ -186,20 +203,22 @@ def save_and_report(results_df: pd.DataFrame):
     print("\n" + "=" * 60)
     print("🏆 BESTE PARAMETER-KOMBINATION (SENSIBEL)")
     print("=" * 60)
-    print(f"\n📊 Sharpe Ratio:     {best['sharpe_ratio']:.2f}")
-    print(f"📈 Gesamtrendite:    {best['total_return']:.2%}")
+    print(f"\n📊 Sharpe Ratio:     {sharpe:.2f}")
+    print(f"📈 Gesamtrendite:    {total_return:.2%}")
     print(f"\n🔧 Parameter:")
-    print(f"   BULL_QUIET:       {best['bull_quiet']:.2f}")
-    print(f"   STRESS:           {best['stress']:.2f}")
-    print(f"   BULL_FRAGILE:     {best['bull_fragile']:.2f}")
-    print(f"   REVERSION:        {best['reversion']:.2f}")
-    print(f"   Bestätigungstage: {int(best['confirmation_days'])}")
+    print(f"   BULL_QUIET:       {bull_quiet:.2f}")
+    print(f"   STRESS:           {stress:.2f}")
+    print(f"   BULL_FRAGILE:     {bull_fragile:.2f}")
+    print(f"   REVERSION:        {reversion:.2f}")
+    print(f"   Bestätigungstage: {int(conf_days)}")
     print(f"\n🔄 Aktivität:")
-    print(f"   Anzahl Trades:    {int(best['num_trades'])}")
-    print(f"   Ø Position:       {best['avg_position']:.1%}")
+    print(f"   Anzahl Trades:    {int(num_trades)}")
+    print(f"   Ø Position:       {avg_position:.1%}")
     
     print(f"\n💾 Gespeichert: {OUTPUT_DIR / 'sensitive_best_params.json'}")
     print(f"💾 Ergebnisse: {OUTPUT_DIR / 'sensitive_optimization_results.csv'}")
+    
+    return best_params
 
 # =============================================================================
 # 7. HAUPTPROGRAMM
