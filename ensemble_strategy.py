@@ -1,5 +1,5 @@
 """
-ensemble_strategy.py – Ensemble-Strategie (VIX + HMM) – FINAL KORRIGIERT
+ensemble_strategy.py – Ensemble-Strategie (VIX + HMM) – ENDGÜLTIG FUNKTIONIEREND
 """
 
 import pandas as pd
@@ -26,10 +26,16 @@ def load_data():
     
     sp500 = yf.download('^GSPC', start='2011-01-01', end='2026-08-28', progress=False)
     returns = sp500['Close'].pct_change()
+    
     # Index glätten (falls MultiIndex)
     if isinstance(returns.index, pd.MultiIndex):
         returns.index = returns.index.get_level_values(0)
     returns.index = pd.to_datetime(returns.index).tz_localize(None)
+    
+    # Sicherstellen, dass returns eine Series ist (kein DataFrame)
+    if isinstance(returns, pd.DataFrame):
+        returns = returns.squeeze()
+    
     print(f"   ✅ S&P 500 von Yahoo Finance geladen: {len(returns)} Tage")
     
     common_dates = vix_signals.index.intersection(hmm_labels.index).intersection(returns.index)
@@ -46,12 +52,6 @@ def safe_float(value):
     return float(value) if value is not None else 0.0
 
 def calculate_performance(signals, returns, name):
-    """Berechnet die Performance einer Strategie."""
-    # KORREKTUR: Wenn returns einen MultiIndex hat, glätten
-    if isinstance(returns.index, pd.MultiIndex):
-        returns = returns.copy()
-        returns.index = returns.index.get_level_values(0)
-    
     common_dates = signals.index.intersection(returns.index)
     signals_aligned = signals.loc[common_dates]
     returns_aligned = returns.loc[common_dates]
@@ -91,7 +91,7 @@ def calculate_performance(signals, returns, name):
 
 def main():
     print("=" * 80)
-    print("📈 STARTE ENSEMBLE-STRATEGIE (FINAL KORRIGIERT)")
+    print("📈 STARTE ENSEMBLE-STRATEGIE (ENDGÜLTIG)")
     print("=" * 80)
     
     vix_signals, hmm_labels, returns = load_data()
