@@ -1,6 +1,6 @@
 """
-ensemble_strategy.py – Ensemble-Strategie (VIX + HMM) – KORRIGIERT
-==================================================================
+ensemble_strategy.py – Ensemble-Strategie (VIX + HMM) – FINAL
+=============================================================
 """
 
 import pandas as pd
@@ -19,25 +19,22 @@ def load_data():
     
     # 1. VIX-Signale laden
     vix_signals = pd.read_csv(OUTPUT_DIR / 'trading_signals.csv', index_col=0, parse_dates=True)
-    print(f"   📊 VIX-Signale Spalten: {vix_signals.columns.tolist()}")
+    print(f"   📊 VIX-Signale: {len(vix_signals)} Tage")
     
     # 2. HMM-Labels laden
     hmm_labels = pd.read_csv(OUTPUT_DIR / 'rolling_hmm_enhanced_labels.csv', index_col=0, parse_dates=True)
-    print(f"   📊 HMM-Labels Spalten: {hmm_labels.columns.tolist()}")
+    print(f"   📊 HMM-Labels: {len(hmm_labels)} Tage")
     
-    # 3. Renditen aus market_data.csv laden (SP500_returns)
-    market_data = pd.read_csv(DATA_DIR / "market_data.csv", index_col=0, parse_dates=True)
+    # 3. Renditen von Yahoo Finance laden
+    import yfinance as yf
+    sp500 = yf.download('^GSPC', start='2011-01-01', end='2026-08-28', progress=False)
     
-    # Prüfen, ob SP500_returns existiert
-    if 'SP500_returns' in market_data.columns:
-        returns = market_data['SP500_returns'].dropna()
-        print(f"   ✅ SP500_returns aus market_data.csv geladen: {len(returns)} Tage")
-    else:
-        # Fallback: Yahoo Finance
-        import yfinance as yf
-        sp500 = yf.download('^GSPC', start='2011-01-01', end='2026-08-28', progress=False)
-        returns = sp500['Close'].pct_change()
-        print(f"   ✅ S&P 500 von Yahoo Finance geladen: {len(returns)} Tage")
+    # KORREKTUR: Den Index glätten (nur Datum, ohne Ticker)
+    if isinstance(sp500.index, pd.MultiIndex):
+        sp500.index = sp500.index.get_level_values(0)
+    
+    returns = sp500['Close'].pct_change()
+    print(f"   ✅ S&P 500 von Yahoo Finance geladen: {len(returns)} Tage")
     
     # Gemeinsame Tage finden
     common_dates = vix_signals.index.intersection(hmm_labels.index).intersection(returns.index)
@@ -94,7 +91,7 @@ def calculate_performance(signals: pd.DataFrame, returns: pd.Series, name: str) 
 
 def main():
     print("=" * 80)
-    print("📈 STARTE ENSEMBLE-STRATEGIE (KORRIGIERT)")
+    print("📈 STARTE ENSEMBLE-STRATEGIE (FINAL)")
     print("=" * 80)
     
     # Daten laden
@@ -143,15 +140,20 @@ def main():
     print("📋 FAZIT")
     print("=" * 80)
     
-    if ensemble_perf['sharpe_ratio'] > vix_perf['sharpe_ratio']:
-        print(f"✅ Ensemble verbessert Sharpe Ratio: {vix_perf['sharpe_ratio']:.2f} → {ensemble_perf['sharpe_ratio']:.2f}")
-    else:
-        print(f"⚠️ Ensemble verschlechtert Sharpe Ratio: {vix_perf['sharpe_ratio']:.2f} → {ensemble_perf['sharpe_ratio']:.2f}")
+    sr_vix = vix_perf['sharpe_ratio']
+    sr_ens = ensemble_perf['sharpe_ratio']
+    dd_vix = vix_perf['max_drawdown']
+    dd_ens = ensemble_perf['max_drawdown']
     
-    if ensemble_perf['max_drawdown'] > vix_perf['max_drawdown']:
-        print(f"✅ Ensemble reduziert Drawdown: {vix_perf['max_drawdown']:.2%} → {ensemble_perf['max_drawdown']:.2%}")
+    if sr_ens > sr_vix:
+        print(f"✅ Ensemble verbessert Sharpe Ratio: {sr_vix:.2f} → {sr_ens:.2f} (+{(sr_ens-sr_vix)*100:.1f}%)")
     else:
-        print(f"⚠️ Ensemble verschlechtert Drawdown: {vix_perf['max_drawdown']:.2%} → {ensemble_perf['max_drawdown']:.2%}")
+        print(f"⚠️ Ensemble verschlechtert Sharpe Ratio: {sr_vix:.2f} → {sr_ens:.2f} ({(sr_ens-sr_vix)*100:.1f}%)")
+    
+    if dd_ens > dd_vix:
+        print(f"✅ Ensemble reduziert Drawdown: {dd_vix:.2%} → {dd_ens:.2%}")
+    else:
+        print(f"⚠️ Ensemble verschlechtert Drawdown: {dd_vix:.2%} → {dd_ens:.2%}")
     
     # Speichern
     ensemble_signals.to_csv(OUTPUT_DIR / 'ensemble_signals.csv')
