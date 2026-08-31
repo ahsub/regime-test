@@ -1,0 +1,4 @@
+python3 prepare_data.py
+python3 ensemble_3step.py
+python3 out_of_sample_3step.py
+python3 transaction_costs_aggressive.py
