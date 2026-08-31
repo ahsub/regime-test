@@ -118,6 +118,21 @@ def calculate_performance(signals: pd.DataFrame, returns: pd.Series, name: str) 
     signals_aligned = signals.loc[common_dates]
     returns_aligned = returns.loc[common_dates]
     
+    if len(signals_aligned) < 10:
+        return {
+            'name': name,
+            'total_return_strategy': 0.0,
+            'total_return_market': 0.0,
+            'sharpe_ratio': 0.0,
+            'max_drawdown': 0.0,
+            'num_trades': 0,
+            'avg_position': 0.0,
+            'n_days': 0,
+            'strategy_cum': pd.Series(),
+            'market_cum': pd.Series(),
+            'strategy_returns': pd.Series()
+        }
+    
     positions = signals_aligned['position'].shift(1).fillna(0)
     strategy_returns = positions * returns_aligned
     
@@ -130,17 +145,27 @@ def calculate_performance(signals: pd.DataFrame, returns: pd.Series, name: str) 
     peak = strategy_cum.expanding().max()
     drawdown = (strategy_cum - peak) / peak
     
+    # KORREKTUR: .iloc[-1] kann ein Series sein – wir extrahieren den Wert
+    def safe_last_value(series):
+        if len(series) == 0:
+            return 0.0
+        val = series.iloc[-1]
+        if isinstance(val, pd.Series):
+            return float(val.iloc[0]) if len(val) > 0 else 0.0
+        return float(val)
+    
     return {
         'name': name,
-        'total_return_strategy': float(strategy_cum.iloc[-1] - 1) if len(strategy_cum) > 0 else 0.0,
-        'total_return_market': float(market_cum.iloc[-1] - 1) if len(market_cum) > 0 else 0.0,
+        'total_return_strategy': safe_last_value(strategy_cum) - 1,
+        'total_return_market': safe_last_value(market_cum) - 1,
         'sharpe_ratio': float(sharpe),
         'max_drawdown': float(drawdown.min()) if len(drawdown) > 0 else 0.0,
         'num_trades': int((positions != positions.shift(1)).sum()),
         'avg_position': float(positions.mean()) if len(positions) > 0 else 0.0,
         'n_days': len(positions),
         'strategy_cum': strategy_cum,
-        'market_cum': market_cum
+        'market_cum': market_cum,
+        'strategy_returns': strategy_returns
     }
 
 # =============================================================================
