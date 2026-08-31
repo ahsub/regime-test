@@ -1,14 +1,10 @@
 """
 ensemble_strategy.py – Ensemble-Strategie (VIX + HMM)
 ======================================================
-
-Diese Strategie kombiniert die VIX-Strategie mit dem erweiterten HMM.
-Sie investiert nur, wenn BEIDE Modelle ein "Bull"-Signal geben.
 """
 
 import pandas as pd
 import numpy as np
-import json
 from pathlib import Path
 import matplotlib.pyplot as plt
 import warnings
@@ -21,9 +17,6 @@ warnings.filterwarnings('ignore')
 DATA_DIR = Path(__file__).parent / "data"
 OUTPUT_DIR = DATA_DIR / "results"
 OUTPUT_DIR.mkdir(exist_ok=True)
-
-HMM_BULL_THRESHOLD = 1.5
-VIX_BULL_THRESHOLD = 0.50
 
 # =============================================================================
 # 2. DATEN LADEN
@@ -73,7 +66,7 @@ def generate_ensemble_signals(vix_signals: pd.DataFrame, hmm_labels: pd.DataFram
     return signals
 
 # =============================================================================
-# 4. PERFORMANCE-BERECHNUNG (KORRIGIERT)
+# 4. PERFORMANCE-BERECHNUNG (ENDGÜLTIG KORRIGIERT)
 # =============================================================================
 
 def calculate_performance(signals: pd.DataFrame, returns: pd.Series, name: str) -> dict:
@@ -100,21 +93,27 @@ def calculate_performance(signals: pd.DataFrame, returns: pd.Series, name: str) 
     peak = strategy_cum.expanding().max()
     drawdown = (strategy_cum - peak) / peak
     
-    # KORREKTUR: Sicherer Zugriff auf den letzten Wert
-    def safe_last_value(series):
-        if len(series) == 0:
-            return 0.0
-        val = series.iloc[-1]
-        if isinstance(val, pd.Series):
-            return float(val.iloc[0]) if len(val) > 0 else 0.0
-        return float(val)
+    def safe_float(value):
+        if isinstance(value, pd.Series):
+            return float(value.iloc[0]) if len(value) > 0 else 0.0
+        return float(value)
+    
+    # Drawdown sicher extrahieren
+    dd_min = drawdown.min()
+    if isinstance(dd_min, pd.Series):
+        dd_min = dd_min.iloc[0] if len(dd_min) > 0 else 0.0
+    max_drawdown = float(dd_min) if dd_min is not None else 0.0
+    
+    # Letzten Wert sicher extrahieren
+    last_strategy = strategy_cum.iloc[-1] if len(strategy_cum) > 0 else pd.Series([1.0])
+    last_market = market_cum.iloc[-1] if len(market_cum) > 0 else pd.Series([1.0])
     
     return {
         'name': name,
-        'total_return_strategy': safe_last_value(strategy_cum) - 1,
-        'total_return_market': safe_last_value(market_cum) - 1,
+        'total_return_strategy': safe_float(last_strategy) - 1,
+        'total_return_market': safe_float(last_market) - 1,
         'sharpe_ratio': float(sharpe),
-        'max_drawdown': float(drawdown.min()) if len(drawdown) > 0 else 0.0,
+        'max_drawdown': max_drawdown,
         'num_trades': int((positions != positions.shift(1)).sum()),
         'avg_position': float(positions.mean()) if len(positions) > 0 else 0.0,
         'n_days': len(positions),
@@ -124,7 +123,7 @@ def calculate_performance(signals: pd.DataFrame, returns: pd.Series, name: str) 
     }
 
 # =============================================================================
-# 5. VISUALISIERUNG
+# 5. VISUALISIERUNG & REPORT
 # =============================================================================
 
 def plot_comparison(vix_perf: dict, hmm_perf: dict, ensemble_perf: dict):
@@ -132,16 +131,16 @@ def plot_comparison(vix_perf: dict, hmm_perf: dict, ensemble_perf: dict):
     fig, axes = plt.subplots(2, 2, figsize=(14, 10))
     
     ax1 = axes[0, 0]
-    if len(vix_perf['strategy_cum']) > 0:
+    if len(vix_perf.get('strategy_cum', [])) > 0:
         ax1.plot(vix_perf['strategy_cum'].index, vix_perf['strategy_cum'], 
                  label=f"VIX ({vix_perf['sharpe_ratio']:.2f})", color='blue', linewidth=1.5)
-    if len(hmm_perf['strategy_cum']) > 0:
+    if len(hmm_perf.get('strategy_cum', [])) > 0:
         ax1.plot(hmm_perf['strategy_cum'].index, hmm_perf['strategy_cum'], 
                  label=f"HMM ({hmm_perf['sharpe_ratio']:.2f})", color='green', linewidth=1.5)
-    if len(ensemble_perf['strategy_cum']) > 0:
+    if len(ensemble_perf.get('strategy_cum', [])) > 0:
         ax1.plot(ensemble_perf['strategy_cum'].index, ensemble_perf['strategy_cum'], 
                  label=f"Ensemble ({ensemble_perf['sharpe_ratio']:.2f})", color='red', linewidth=2)
-    if len(vix_perf['market_cum']) > 0:
+    if len(vix_perf.get('market_cum', [])) > 0:
         ax1.plot(vix_perf['market_cum'].index, vix_perf['market_cum'], 
                  label='Buy & Hold', color='grey', alpha=0.5, linestyle='--')
     ax1.set_title('Kumulierte Renditen', fontsize=12)
@@ -170,7 +169,7 @@ def plot_comparison(vix_perf: dict, hmm_perf: dict, ensemble_perf: dict):
                 f'{val:.1f}%', ha='center', va='bottom', fontweight='bold')
     
     ax4 = axes[1, 1]
-    if len(ensemble_perf['strategy_returns']) > 0:
+    if len(ensemble_perf.get('strategy_returns', [])) > 0:
         ax4.fill_between(ensemble_perf['strategy_returns'].index, 0, 
                          ensemble_perf['strategy_returns'], 
                          alpha=0.3, color='red', label='Ensemble Position')
@@ -184,10 +183,6 @@ def plot_comparison(vix_perf: dict, hmm_perf: dict, ensemble_perf: dict):
     plt.savefig(OUTPUT_DIR / 'ensemble_comparison.png', dpi=150)
     plt.show()
     print(f"💾 Vergleichsgrafik gespeichert: {OUTPUT_DIR / 'ensemble_comparison.png'}")
-
-# =============================================================================
-# 6. REPORT
-# =============================================================================
 
 def print_comparison(vix_perf: dict, hmm_perf: dict, ensemble_perf: dict):
     """Gibt einen Vergleichsreport aus."""
@@ -219,7 +214,7 @@ def print_comparison(vix_perf: dict, hmm_perf: dict, ensemble_perf: dict):
         print(f"⚠️ Drawdown verschlechtert: {vix_perf['max_drawdown']:.2%} → {ensemble_perf['max_drawdown']:.2%}")
 
 # =============================================================================
-# 7. HAUPTPROGRAMM
+# 6. HAUPTPROGRAMM
 # =============================================================================
 
 def main():
