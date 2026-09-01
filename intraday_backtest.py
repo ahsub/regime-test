@@ -40,41 +40,29 @@ def load_daily_data():
     return daily_returns
 
 # =============================================================================
-# 2. BACKTEST-FUNKTIONEN (KORRIGIERT)
+# 2. BACKTEST-FUNKTIONEN (MIT ITERTUPLES)
 # =============================================================================
 
 def backtest_intraday(spy_df, vix_df=None):
     print("\n🔧 Berechne Intraday-Features...")
     spy_df['returns'] = spy_df['Close'].pct_change()
     spy_df['volatility'] = spy_df['returns'].rolling(20).std() * np.sqrt(252 * 6.5)
+    
     if vix_df is not None and len(vix_df) > 0:
         vix_aligned = vix_df['Close'].reindex(spy_df.index, method='ffill')
         spy_df['vix'] = vix_aligned
         spy_df['vix_ma20'] = spy_df['vix'].rolling(20).mean()
         spy_df['vix_spread'] = spy_df['vix'] / spy_df['vix_ma20']
     else:
-        # Fallback: verwende die Volatilität als Proxy
-        spy_df['vix_spread'] = 1.0  # Neutraler Startwert
+        spy_df['vix_spread'] = 1.0
     
     spy_df = spy_df.dropna()
     print(f"   ✅ {len(spy_df)} Intraday-Bars mit Features")
     
     print("🔧 Generiere Intraday-Signale...")
     
-    # Erstelle eine Kopie, um die Series-zu-skalar-Konvertierung zu umgehen
-    def get_regime(row):
-        # Sichere Extraktion der Werte
-        if pd.isna(row['vix_spread']):
-            vix_spread = 1.0
-        else:
-            vix_spread = row['vix_spread']
-        
-        if pd.isna(row['volatility']):
-            volatility = 0.2
-        else:
-            volatility = row['volatility']
-        
-        # Regime-Logik
+    # Definiere die Regime-Logik als normale Funktion
+    def get_regime(vix_spread, volatility):
         if vix_spread < 0.98:
             return "STRESS_UNSTABLE"
         elif vix_spread < 1.05:
@@ -82,10 +70,13 @@ def backtest_intraday(spy_df, vix_df=None):
         else:
             return "BULL_FRAGILE" if volatility > 0.30 else "BULL_QUIET"
     
-    # Iteriere über die Zeilen, um sicherzustellen, dass jede Zeile als Series behandelt wird
+    # Iteriere mit itertuples() – das gibt Tupel zurück, keine Series
     regimes = []
-    for idx, row in spy_df.iterrows():
-        regimes.append(get_regime(row))
+    for row in spy_df.itertuples():
+        # Zugriff auf die Werte über den Index
+        vix_spread = row.vix_spread if hasattr(row, 'vix_spread') else 1.0
+        volatility = row.volatility if hasattr(row, 'volatility') else 0.2
+        regimes.append(get_regime(vix_spread, volatility))
     
     signals = pd.DataFrame(index=spy_df.index)
     signals['regime'] = regimes
@@ -98,7 +89,6 @@ def backtest_intraday(spy_df, vix_df=None):
     sharpe = np.sqrt(252 * 6.5) * np.mean(excess_returns) / np.std(excess_returns) if np.std(excess_returns) > 0 else 0
     strategy_cum = (1 + strategy_returns).cumprod()
     
-    # Sicherer Zugriff auf den letzten Wert
     last_val = strategy_cum.iloc[-1] if len(strategy_cum) > 0 else 1.0
     if isinstance(last_val, pd.Series):
         last_val = last_val.iloc[0]
