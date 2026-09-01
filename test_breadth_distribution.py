@@ -3,7 +3,7 @@ test_breadth_distribution.py – Test Breadth & Distribution Days für 2022er-L�
 ================================================================================
 
 Dieses Skript testet, ob Advance-Decline-Linie und Distribution Days die
-2022er-Fehlklassifikationen von classify_regime_v2() beheben können.
+2022er-Fehlklassifikationen von classify_regime_v2() behehen können.
 """
 
 import pandas as pd
@@ -62,11 +62,10 @@ def load_data():
     
     # 7. Distribution Days berechnen
     df['distribution_day'] = 0
-    # Definition: Tag mit -1% oder mehr und Volumen > 50-Tage-Durchschnitt
     df['volume'] = sp500['Volume'] if 'Volume' in sp500.columns else pd.Series(0, index=sp500.index)
     df['volume_ma50'] = df['volume'].rolling(50).mean()
     df['distribution_day'] = ((df['returns'] < -0.01) & (df['volume'] > df['volume_ma50'])).astype(int)
-    df['distribution_days_5'] = df['distribution_day'].rolling(5).sum()  # 5-Tage-Summe
+    df['distribution_days_5'] = df['distribution_day'].rolling(5).sum()
     
     df = df.dropna()
     print(f"   ✅ {len(df)} Tage geladen ({df.index[0].date()} bis {df.index[-1].date()})")
@@ -106,9 +105,14 @@ def classify_regime_v3(vix, vix3m, gex, ad_line, distribution_days,
     # 2. Nur bei NEUTRAL: Prüfen, ob Stress vorliegt
     if regime == "NEUTRAL":
         # AD-Linie: Wenn unter 95% des 20-Tage-Hochs
-        ad_high_20 = ad_line.rolling(20).max()
-        if len(ad_high_20) > 0 and ad_line.iloc[-1] < ad_high_20.iloc[-1] * ad_threshold:
-            return "STRESS_UNSTABLE"
+        if isinstance(ad_line, pd.Series):
+            ad_high_20 = ad_line.rolling(20).max()
+            if len(ad_high_20) > 0 and ad_line.iloc[-1] < ad_high_20.iloc[-1] * ad_threshold:
+                return "STRESS_UNSTABLE"
+        else:
+            # Fallback für einzelne Werte
+            if ad_line < ad_line * ad_threshold:
+                return "STRESS_UNSTABLE"
         
         # Distribution Days: Wenn 3+ in den letzten 5 Tagen
         if distribution_days >= dd_threshold:
@@ -117,7 +121,7 @@ def classify_regime_v3(vix, vix3m, gex, ad_line, distribution_days,
     return regime
 
 # =============================================================================
-# 4. Backtest-Funktion
+# 4. Backtest-Funktion (KORRIGIERT)
 # =============================================================================
 
 def backtest_strategy(df, regime_func, name, **kwargs):
@@ -128,14 +132,22 @@ def backtest_strategy(df, regime_func, name, **kwargs):
     
     for i in range(len(df)):
         row = df.iloc[i]
-        # Regime bestimmen
+        # Prüfen, ob zusätzliche Parameter übergeben wurden
         if kwargs:
-            regime = regime_func(row['vix'], row['vix3m'], row['gex'], 
-                                row['ad_line'], row['distribution_days_5'])
+            # Für V3: mit zusätzlichen Parametern
+            regime = regime_func(
+                row['vix'], 
+                row['vix3m'], 
+                row['gex'],
+                row['ad_line'], 
+                row['distribution_days_5'],
+                **kwargs
+            )
         else:
+            # Für V2: nur die drei Standard-Parameter
             regime = regime_func(row['vix'], row['vix3m'], row['gex'])
+        
         signals.iloc[i, 0] = regime
-        # Position: 0% bei STRESS_UNSTABLE, sonst 100%
         signals.iloc[i, 1] = 0.0 if regime == "STRESS_UNSTABLE" else 1.0
     
     # Performance
@@ -144,7 +156,7 @@ def backtest_strategy(df, regime_func, name, **kwargs):
     excess_returns = strategy_returns - 0.02/252
     sharpe = np.sqrt(252) * np.mean(excess_returns) / np.std(excess_returns) if np.std(excess_returns) > 0 else 0
     strategy_cum = (1 + strategy_returns).cumprod()
-    total_return = float(strategy_cum.iloc[-1] - 1)
+    total_return = float(strategy_cum.iloc[-1] - 1) if len(strategy_cum) > 0 else 0.0
     
     return {
         'name': name,
@@ -196,9 +208,15 @@ def main():
     print("\n🔧 Führe V2-Backtest durch...")
     v2_result = backtest_strategy(df, classify_regime_v2, "V2")
     
-    # 2. V3 Backtest
+    # 2. V3 Backtest (mit zusätzlichen Parametern)
     print("🔧 Führe V3-Backtest durch (Breadth + Distribution Days)...")
-    v3_result = backtest_strategy(df, classify_regime_v3, "V3")
+    v3_result = backtest_strategy(
+        df, 
+        classify_regime_v3, 
+        "V3",
+        ad_threshold=0.95,
+        dd_threshold=3
+    )
     
     # 3. Ergebnisse vergleichen
     print("\n" + "=" * 60)
