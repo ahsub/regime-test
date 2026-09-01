@@ -1,179 +1,116 @@
 """
-intraday_backtest.py – Intraday-Regime-Erkennung mit Alpha Vantage
-==================================================================
+intraday_backtest_yf.py – Intraday-Backtest mit Yahoo Finance
+==============================================================
 
-Dieses Skript testet, ob 60-Minuten-Daten (SPY, VIX) eine bessere
-Regime-Erkennung ermöglichen als tägliche Daten.
+Dieses Skript testet 60-Minuten-Daten für SPY und VIX (letzte 730 Tage)
+mit Yahoo Finance.
 
 Basierend auf Pagliaro (2026): Intraday-HMM kann Sharpe um 0,15–0,20 verbessern.
 """
 
 import pandas as pd
 import numpy as np
-import time
-import requests
+import yfinance as yf
 from pathlib import Path
-from datetime import datetime, timedelta
 import warnings
 warnings.filterwarnings('ignore')
-
-# =============================================================================
-# 1. KONFIGURATION
-# =============================================================================
-
-ALPHA_VANTAGE_KEY = "FYPYAZR6BWJLY254"  # <-- Hier Ihren API-Key einfügen
 
 DATA_DIR = Path(__file__).parent / "data"
 OUTPUT_DIR = DATA_DIR / "results"
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 # =============================================================================
-# 2. ALPHA VANTAGE CLIENT
+# 1. DATEN LADEN
 # =============================================================================
 
-class AlphaVantageClient:
-    def __init__(self, api_key, calls_per_minute=5):
-        self.api_key = api_key
-        self.delay = 60 / calls_per_minute  # 12 Sekunden
-        self.last_call_time = 0
+def load_intraday_data():
+    """Lädt 60-Minuten-Daten von Yahoo Finance."""
+    print("📊 Lade Intraday-Daten (60-Minuten, letzte 730 Tage)...")
     
-    def _call(self, url):
-        """Führt einen API-Call mit Rate-Limiting durch."""
-        now = time.time()
-        elapsed = now - self.last_call_time
-        if elapsed < self.delay:
-            time.sleep(self.delay - elapsed)
-        
-        response = requests.get(url)
-        self.last_call_time = time.time()
-        
-        if response.status_code == 200:
-            return response.json()
-        else:
-            print(f"   ⚠️ API-Fehler: {response.status_code}")
-            return None
+    # SPY 60-Minuten-Daten (letzte 730 Tage)
+    spy_intraday = yf.download('SPY', interval='60m', period='2y', progress=False)
+    if len(spy_intraday) == 0:
+        print("❌ Keine Intraday-Daten für SPY verfügbar.")
+        return None
     
-    def fetch_intraday(self, symbol, interval='60min'):
-        """Lädt Intraday-Daten von Alpha Vantage."""
-        url = f"https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol={symbol}&interval={interval}&outputsize=full&apikey={self.api_key}"
-        print(f"   📥 Lade {symbol} ({interval})...")
-        data = self._call(url)
-        if data and 'Time Series (60min)' in data:
-            return data['Time Series (60min)']
-        else:
-            print(f"   ❌ Keine Daten für {symbol}")
-            return None
-
-# =============================================================================
-# 3. DATEN LADEN
-# =============================================================================
-
-def load_data():
-    """Lädt Intraday-Daten und tägliche Daten (zum Vergleich)."""
-    print("📊 Lade Intraday-Daten...")
+    print(f"   ✅ SPY Intraday: {len(spy_intraday)} Bars")
     
-    client = AlphaVantageClient(ALPHA_VANTAGE_KEY)
-    
-    # 1. SPY 60-Minuten-Daten
-    spy_data = client.fetch_intraday('SPY', '60min')
-    
-    # 2. VIX 60-Minuten-Daten
-    vix_data = client.fetch_intraday('VXX', '60min')  # VIX ETF
-    
-    if spy_data is None:
-        print("❌ SPY-Daten konnten nicht geladen werden. Abbruch.")
-        return None, None, None
-    
-    # 3. In DataFrames umwandeln
-    spy_df = pd.DataFrame.from_dict(spy_data, orient='index')
-    spy_df.index = pd.to_datetime(spy_df.index)
-    spy_df = spy_df.sort_index()
-    spy_df['close'] = spy_df['4. close'].astype(float)
-    
-    if vix_data:
-        vix_df = pd.DataFrame.from_dict(vix_data, orient='index')
-        vix_df.index = pd.to_datetime(vix_df.index)
-        vix_df = vix_df.sort_index()
-        vix_df['close'] = vix_df['4. close'].astype(float)
-    
-    # 4. Tägliche Daten als Vergleich laden
-    import yfinance as yf
-    daily_spy = yf.download('SPY', start='2011-01-01', end='2026-08-28', progress=False)
-    daily_vix = yf.download('^VIX', start='2011-01-01', end='2026-08-28', progress=False)
-    
-    daily_returns = daily_spy['Close'].pct_change()
-    
-    print(f"   ✅ Intraday SPY: {len(spy_df)} Bars")
-    print(f"   ✅ Intraday VIX: {len(vix_df) if vix_data else 0} Bars")
-    print(f"   ✅ Daily SPY: {len(daily_spy)} Tage")
-    
-    return spy_df, vix_df, daily_returns
-
-# =============================================================================
-# 4. REGIME-ERKENNUNG AUF INTRADAY-DATEN
-# =============================================================================
-
-def calculate_intraday_features(spy_df, vix_df):
-    """Berechnet Features für Intraday-Regime-Erkennung."""
-    print("\n🔧 Berechne Intraday-Features...")
-    
-    # 1. Renditen
-    spy_df['returns'] = spy_df['close'].pct_change()
-    
-    # 2. 20-Perioden-Volatilität (20 Stunden = 5 Tage à 4 Stunden)
-    spy_df['volatility'] = spy_df['returns'].rolling(20).std() * np.sqrt(252 * 6.5)
-    
-    # 3. Intraday-VIX (falls verfügbar)
-    if vix_df is not None and len(vix_df) > 0:
-        # VIX auf SPY-Index alignieren
-        vix_aligned = vix_df['close'].reindex(spy_df.index, method='ffill')
-        spy_df['vix'] = vix_aligned
+    # VIX 60-Minuten-Daten (letzte 730 Tage)
+    vix_intraday = yf.download('^VIX', interval='60m', period='2y', progress=False)
+    if len(vix_intraday) > 0:
+        print(f"   ✅ VIX Intraday: {len(vix_intraday)} Bars")
     else:
-        spy_df['vix'] = 20  # Fallback
+        print("   ⚠️ Keine Intraday-Daten für VIX verfügbar.")
+        vix_intraday = None
     
-    # 4. Intraday-Trend
-    spy_df['trend'] = spy_df['close'].rolling(10).mean() / spy_df['close'].rolling(20).mean()
-    
-    spy_df = spy_df.dropna()
-    print(f"   ✅ {len(spy_df)} Intraday-Bars mit Features")
-    
-    return spy_df
+    return spy_intraday, vix_intraday
+
+def load_daily_data():
+    """Lädt tägliche Daten für Vergleich."""
+    print("📊 Lade tägliche Daten für Vergleich...")
+    daily_spy = yf.download('SPY', start='2011-01-01', end='2026-08-28', progress=False)
+    daily_returns = daily_spy['Close'].pct_change()
+    print(f"   ✅ Tägliche SPY: {len(daily_spy)} Tage")
+    return daily_returns
 
 # =============================================================================
-# 5. SIMPLE REGIME-LOGIK FÜR INTRADAY
+# 2. INTRADAY-REGIME-ERKENNUNG
 # =============================================================================
 
 def intraday_regime_signal(row):
     """
-    Einfache Intraday-Regime-Logik.
+    Einfache Intraday-Regime-Logik (basierend auf VIX-Spread + Volatilität).
     """
-    # VIX-Termstruktur (vereinfacht: VIX-Spot vs. 20-Stunden-Mittel)
-    vix_spread = row['vix'] / row['vix'].rolling(20).mean() if pd.notna(row['vix']) else 1.0
+    # VIX-Spread (vereinfacht: VIX-Spot gegen den gleitenden Durchschnitt)
+    vix_spread = row.get('vix_spread', 1.0)
+    volatility = row.get('volatility', 0.2)
     
     if vix_spread < 0.98:
         return "STRESS_UNSTABLE"
     elif vix_spread < 1.05:
         return "POST_PANIC_REVERSION"
     else:
-        if row['volatility'] > 0.30:
+        if volatility > 0.30:
             return "BULL_FRAGILE"
         else:
             return "BULL_QUIET"
 
-def backtest_intraday(df):
-    """Führt einen Backtest auf Intraday-Basis durch."""
-    print("\n🔧 Führe Intraday-Backtest durch...")
+def backtest_intraday(spy_df, vix_df=None):
+    """Führt Backtest auf Intraday-Basis durch."""
+    print("\n🔧 Berechne Intraday-Features...")
     
-    signals = pd.DataFrame(index=df.index)
-    signals['regime'] = df.apply(intraday_regime_signal, axis=1)
+    # 1. Renditen
+    spy_df['returns'] = spy_df['Close'].pct_change()
+    
+    # 2. 20-Perioden-Volatilität (20 Stunden ≈ 5 Tage)
+    spy_df['volatility'] = spy_df['returns'].rolling(20).std() * np.sqrt(252 * 6.5)
+    
+    # 3. Intraday-VIX
+    if vix_df is not None and len(vix_df) > 0:
+        vix_aligned = vix_df['Close'].reindex(spy_df.index, method='ffill')
+        spy_df['vix'] = vix_aligned
+        spy_df['vix_ma20'] = spy_df['vix'].rolling(20).mean()
+        spy_df['vix_spread'] = spy_df['vix'] / spy_df['vix_ma20']
+    else:
+        spy_df['vix'] = 20
+        spy_df['vix_ma20'] = 20
+        spy_df['vix_spread'] = 1.0
+    
+    spy_df = spy_df.dropna()
+    print(f"   ✅ {len(spy_df)} Intraday-Bars mit Features")
+    
+    # 4. Signale generieren
+    print("🔧 Generiere Intraday-Signale...")
+    signals = pd.DataFrame(index=spy_df.index)
+    signals['regime'] = spy_df.apply(intraday_regime_signal, axis=1)
     signals['position'] = 0.0
     signals.loc[signals['regime'] != 'STRESS_UNSTABLE', 'position'] = 1.0
     
-    # Performance (auf Intraday-Basis)
+    # 5. Performance berechnen
     positions = signals['position'].shift(1).fillna(0)
-    strategy_returns = positions * df['returns']
+    strategy_returns = positions * spy_df['returns']
     
-    excess_returns = strategy_returns - 0.02/252/6.5  # Annualisiert auf Handelstage
+    excess_returns = strategy_returns - 0.02/252/6.5
     sharpe = np.sqrt(252 * 6.5) * np.mean(excess_returns) / np.std(excess_returns) if np.std(excess_returns) > 0 else 0
     
     strategy_cum = (1 + strategy_returns).cumprod()
@@ -186,15 +123,9 @@ def backtest_intraday(df):
         'n_days': len(signals)
     }
 
-# =============================================================================
-# 6. TÄGLICHER BACKTEST (ZUM VERGLEICH)
-# =============================================================================
-
 def daily_backtest(returns):
-    """Führt einen täglichen Backtest durch (zum Vergleich)."""
+    """Täglicher Backtest zum Vergleich."""
     print("\n🔧 Führe täglichen Backtest durch...")
-    
-    # Einfache Logik: Signal basierend auf VIX (vereinfacht)
     signals = pd.DataFrame(index=returns.index)
     signals['position'] = 1.0
     
@@ -214,26 +145,24 @@ def daily_backtest(returns):
     }
 
 # =============================================================================
-# 7. HAUPTPROGRAMM
+# 3. HAUPTPROGRAMM
 # =============================================================================
 
 def main():
     print("=" * 60)
-    print("📈 INTRADAY-REGIME-ERKENNUNG (ALPHA VANTAGE)")
+    print("📈 INTRADAY-BACKTEST (YAHOO FINANCE)")
     print("=" * 60)
     
     # Daten laden
-    spy_df, vix_df, daily_returns = load_data()
-    
-    if spy_df is None:
+    spy_intraday, vix_intraday = load_intraday_data()
+    if spy_intraday is None:
         print("❌ Abbruch wegen fehlender Daten.")
         return
     
-    # Intraday-Features berechnen
-    spy_df = calculate_intraday_features(spy_df, vix_df)
+    daily_returns = load_daily_data()
     
     # Intraday-Backtest
-    intraday_result = backtest_intraday(spy_df)
+    intraday_result = backtest_intraday(spy_intraday, vix_intraday)
     
     # Täglicher Backtest (Vergleich)
     daily_result = daily_backtest(daily_returns)
