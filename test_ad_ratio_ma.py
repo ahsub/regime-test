@@ -1,9 +1,11 @@
 """
-test_ad_ratio_ma.py – Test AD-Ratio mit gleitendem Durchschnitt
-=================================================================
+test_ad_ratio_ma_dd2.py – Test AD-Ratio MA3 mit DD-Schwelle = 2
+==================================================================
 
-Dieses Skript testet die AD-Ratio mit gleitenden Durchschnitten (3/5 Tage)
-als Override für classify_regime_v2().
+Schritt 1 der iterativen Optimierung:
+- Distribution Days-Schwelle: 3 → 2
+- AD-Ratio-Schwelle: -0.01 (unverändert)
+- MA-Fenster: 3 (unverändert)
 """
 
 import pandas as pd
@@ -23,22 +25,15 @@ OUTPUT_DIR.mkdir(exist_ok=True)
 # =============================================================================
 
 def load_market_returns():
-    """
-    Lädt S&P 500 Renditen mit automatischem Fallback.
-    Versucht: ^GSPC → SPY → ^SPX
-    """
     tickers = ['^GSPC', 'SPY', '^SPX']
     for ticker in tickers:
         try:
             data = yf.download(ticker, start='2011-01-01', end='2026-08-28', progress=False)
             if len(data) > 0:
-                print(f"   ✅ {ticker} geladen (als Proxy für S&P 500)")
+                print(f"   ✅ {ticker} geladen")
                 return data['Close'].pct_change()
-        except Exception as e:
-            print(f"   ⚠️ {ticker} fehlgeschlagen: {e}")
+        except:
             continue
-    
-    # Fallback: VIX-Renditen (warnen)
     print("   ⚠️ KEIN S&P 500-Ticker verfügbar! Verwende VIX-Renditen als Proxy.")
     vix = pd.read_csv(DATA_DIR / "VIX_History.csv", parse_dates=['DATE'])
     vix = vix.set_index('DATE').sort_index()
@@ -47,37 +42,30 @@ def load_market_returns():
 def load_data():
     print("📊 Lade Daten...")
     
-    # 1. S&P 500 Renditen (mit Fallback)
     returns = load_market_returns()
     
-    # 2. Advance-Decline (NYA) – weiterhin von yfinance
     try:
         nya = yf.download('^NYA', start='2011-01-01', end='2026-08-28', progress=False)
         ad_line = nya['Close']
         print("   ✅ NYA-Daten geladen")
     except Exception as e:
         print(f"   ⚠️ NYA nicht verfügbar, überspringe AD-Ratio")
-        # Dummy-Index für Alignierung
         ad_line = pd.Series(index=returns.index, data=np.nan)
     
     ad_ratio = ad_line.pct_change()
     
-    # 3. VIX
     vix = pd.read_csv(DATA_DIR / "VIX_History.csv", parse_dates=['DATE'])
     vix = vix.set_index('DATE').sort_index()
     vix = vix['CLOSE']
     
-    # 4. VIX3M
     vix3m = pd.read_csv(DATA_DIR / "VIX3M_History.csv", parse_dates=['DATE'])
     vix3m = vix3m.set_index('DATE').sort_index()
     vix3m = vix3m['CLOSE']
     
-    # 5. GEX
     gex = pd.read_csv(DATA_DIR / "DIX.csv", parse_dates=['date'])
     gex = gex.set_index('date').sort_index()
     gex = gex['GEX'] if 'GEX' in gex.columns else gex['gex']
     
-    # 6. Zusammenführen
     df = pd.DataFrame(index=returns.index)
     df['returns'] = returns
     df['vix'] = vix.reindex(df.index, method='ffill')
@@ -87,7 +75,6 @@ def load_data():
     df['ad_ratio_ma3'] = df['ad_ratio'].rolling(3).mean()
     df['ad_ratio_ma5'] = df['ad_ratio'].rolling(5).mean()
     
-    # 7. Distribution Days (vereinfacht ohne Volumen)
     df['distribution_day'] = (df['returns'] < -0.01).astype(int)
     df['distribution_days_5'] = df['distribution_day'].rolling(5).sum()
     
@@ -115,13 +102,13 @@ def classify_regime_v2(vix, vix3m, gex):
         return regime
 
 # =============================================================================
-# 3. Erweiterte Logik mit AD-Ratio-MA
+# 3. Erweiterte Logik mit DD-Schwelle = 2
 # =============================================================================
 
-def classify_regime_v3_ma(vix, vix3m, gex, ad_ratio_ma, distribution_days,
-                           ad_threshold=-0.01, dd_threshold=3):
+def classify_regime_v3_ma_dd2(vix, vix3m, gex, ad_ratio_ma, distribution_days,
+                               ad_threshold=-0.01, dd_threshold=2):
     """
-    Erweiterte Logik: AD-Ratio mit gleitendem Durchschnitt.
+    Erweiterte Logik: DD-Schwelle auf 2 gesenkt.
     """
     regime = classify_regime_v2(vix, vix3m, gex)
     
@@ -138,7 +125,6 @@ def classify_regime_v3_ma(vix, vix3m, gex, ad_ratio_ma, distribution_days,
 # =============================================================================
 
 def backtest_strategy(df, regime_func, name, **kwargs):
-    """Führt einen Backtest für eine Regime-Funktion durch."""
     signals = pd.DataFrame(index=df.index)
     signals['regime'] = 'NEUTRAL'
     signals['position'] = 0.0
@@ -191,7 +177,6 @@ def backtest_strategy(df, regime_func, name, **kwargs):
 # =============================================================================
 
 def analyze_2022_miss(df, v2_signals, v3_signals, label):
-    """Analysiert die 2022er-Fehlklassifikationen."""
     print("\n" + "=" * 60)
     print(f"📊 ANALYSE DER 2022ER-FEHLKLASSIFIKATIONEN ({label})")
     print("=" * 60)
@@ -207,12 +192,10 @@ def analyze_2022_miss(df, v2_signals, v3_signals, label):
             
             print(f"\n📅 {date_str}:")
             print(f"   VIX: {row['vix']:.1f} | VIX3M: {row['vix3m']:.1f} | GEX: {row['gex']:.0f}")
-            print(f"   AD-Ratio (Tageswert): {row['ad_ratio']:.4f}")
             print(f"   AD-Ratio (MA3): {row['ad_ratio_ma3']:.4f}")
-            print(f"   AD-Ratio (MA5): {row['ad_ratio_ma5']:.4f}")
             print(f"   Distribution Days (5d): {int(row['distribution_days_5'])}")
             print(f"   V2-Regime: {v2_regime}")
-            print(f"   V3-Regime: {v3_regime}")
+            print(f"   V3-Regime (DD=2): {v3_regime}")
 
 # =============================================================================
 # 6. HAUPTPROGRAMM
@@ -220,7 +203,7 @@ def analyze_2022_miss(df, v2_signals, v3_signals, label):
 
 def main():
     print("=" * 60)
-    print("📈 TESTE AD-RATIO MIT GLEITENDEM DURCHSCHNITT")
+    print("📈 TESTE AD-RATIO MA3 mit DD-Schwelle = 2")
     print("=" * 60)
     
     df = load_data()
@@ -228,40 +211,30 @@ def main():
     print("\n🔧 Führe V2-Backtest durch...")
     v2_result = backtest_strategy(df, classify_regime_v2, "V2")
     
-    print("🔧 Führe V3-Backtest durch (AD-Ratio MA3, threshold=-0.01)...")
-    v3_ma3_result = backtest_strategy(
-        df, classify_regime_v3_ma, "V3 MA3",
-        ma_window=3, ad_threshold=-0.01, dd_threshold=3
-    )
-    
-    print("🔧 Führe V3-Backtest durch (AD-Ratio MA5, threshold=-0.01)...")
-    v3_ma5_result = backtest_strategy(
-        df, classify_regime_v3_ma, "V3 MA5",
-        ma_window=5, ad_threshold=-0.01, dd_threshold=3
+    print("🔧 Führe V3-Backtest durch (DD=2)...")
+    v3_result = backtest_strategy(
+        df, classify_regime_v3_ma_dd2, "V3 DD=2",
+        ma_window=3, ad_threshold=-0.01, dd_threshold=2
     )
     
     print("\n" + "=" * 60)
-    print("📊 VERGLEICH V2 vs. V3 (AD-RATIO MA)")
+    print("📊 VERGLEICH V2 vs. V3 (DD=2)")
     print("=" * 60)
     
-    print(f"\n{'Kennzahl':<20} | {'V2':<15} | {'MA3':<15} | {'MA5':<15}")
-    print("-" * 70)
-    print(f"{'Sharpe Ratio':<20} | {v2_result['sharpe_ratio']:>14.2f} | {v3_ma3_result['sharpe_ratio']:>14.2f} | {v3_ma5_result['sharpe_ratio']:>14.2f}")
-    print(f"{'Gesamtrendite':<20} | {v2_result['total_return']:>14.2%} | {v3_ma3_result['total_return']:>14.2%} | {v3_ma5_result['total_return']:>14.2%}")
+    print(f"\n{'Kennzahl':<20} | {'V2':<15} | {'V3 (DD=2)':<15}")
+    print("-" * 55)
+    print(f"{'Sharpe Ratio':<20} | {v2_result['sharpe_ratio']:>14.2f} | {v3_result['sharpe_ratio']:>14.2f}")
+    print(f"{'Gesamtrendite':<20} | {v2_result['total_return']:>14.2%} | {v3_result['total_return']:>14.2%}")
     
     print(f"\n📊 Regime-Verteilung V2:")
     for regime, count in v2_result['regime_counts'].items():
         print(f"   {regime}: {count} ({count/len(df)*100:.1f}%)")
     
-    print(f"\n📊 Regime-Verteilung V3 (MA3):")
-    for regime, count in v3_ma3_result['regime_counts'].items():
+    print(f"\n📊 Regime-Verteilung V3 (DD=2):")
+    for regime, count in v3_result['regime_counts'].items():
         print(f"   {regime}: {count} ({count/len(df)*100:.1f}%)")
     
-    print(f"\n📊 Regime-Verteilung V3 (MA5):")
-    for regime, count in v3_ma5_result['regime_counts'].items():
-        print(f"   {regime}: {count} ({count/len(df)*100:.1f}%)")
-    
-    analyze_2022_miss(df, v2_result['signals'], v3_ma3_result['signals'], "MA3")
+    analyze_2022_miss(df, v2_result['signals'], v3_result['signals'], "DD=2")
     
     print("\n" + "=" * 60)
     print("🏁 TEST ABGESCHLOSSEN")
