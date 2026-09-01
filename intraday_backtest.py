@@ -80,7 +80,14 @@ def backtest_intraday(spy_df, vix_df, vix3m_series):
     
     print("🔧 Generiere Intraday-Signale...")
     
+    # Definiere die Regime-Logik als normale Funktion mit sklaren Werten
     def get_regime(vix, vix3m):
+        # Stelle sicher, dass die Werte skalar sind
+        if isinstance(vix, pd.Series):
+            vix = vix.iloc[0] if len(vix) > 0 else 20.0
+        if isinstance(vix3m, pd.Series):
+            vix3m = vix3m.iloc[0] if len(vix3m) > 0 else 20.0
+        
         if vix is None or vix3m is None or vix <= 0:
             return "NEUTRAL"
         ratio = vix3m / vix
@@ -91,11 +98,19 @@ def backtest_intraday(spy_df, vix_df, vix3m_series):
         else:
             return "BULL_FRAGILE" if vix > 25 else "BULL_QUIET"
     
-    # 6. Wende die Regime-Logik auf jede Zeile an
+    # Wende die Funktion auf jede Zeile an
     regimes = []
     for idx, row in spy_df.iterrows():
+        # Extrahiere die Werte als Python-Typen
         vix = row['vix'] if 'vix' in row else 20.0
         vix3m = row['vix3m'] if 'vix3m' in row else 20.0
+        
+        # Konvertiere zu skalaren Werten (falls sie Series sind)
+        if isinstance(vix, pd.Series):
+            vix = vix.iloc[0]
+        if isinstance(vix3m, pd.Series):
+            vix3m = vix3m.iloc[0]
+        
         regimes.append(get_regime(vix, vix3m))
     
     signals = pd.DataFrame(index=spy_df.index)
