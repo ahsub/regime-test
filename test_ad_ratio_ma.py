@@ -27,7 +27,6 @@ def load_data():
     sp500 = yf.download('^GSPC', start='2011-01-01', end='2026-08-28', progress=False)
     returns = sp500['Close'].pct_change()
     
-    # Advance-Decline Ratio (NYA als Proxy)
     try:
         nya = yf.download('^NYA', start='2011-01-01', end='2026-08-28', progress=False)
         ad_line = nya['Close']
@@ -38,34 +37,27 @@ def load_data():
     
     ad_ratio = ad_line.pct_change()
     
-    # VIX
     vix = pd.read_csv(DATA_DIR / "VIX_History.csv", parse_dates=['DATE'])
     vix = vix.set_index('DATE').sort_index()
     vix = vix['CLOSE']
     
-    # VIX3M
     vix3m = pd.read_csv(DATA_DIR / "VIX3M_History.csv", parse_dates=['DATE'])
     vix3m = vix3m.set_index('DATE').sort_index()
     vix3m = vix3m['CLOSE']
     
-    # GEX
     gex = pd.read_csv(DATA_DIR / "DIX.csv", parse_dates=['date'])
     gex = gex.set_index('date').sort_index()
     gex = gex['GEX'] if 'GEX' in gex.columns else gex['gex']
     
-    # Zusammenführen
     df = pd.DataFrame(index=sp500.index)
     df['returns'] = returns
     df['vix'] = vix.reindex(df.index, method='ffill')
     df['vix3m'] = vix3m.reindex(df.index, method='ffill')
     df['gex'] = gex.reindex(df.index, method='ffill')
     df['ad_ratio'] = ad_ratio.reindex(df.index, method='ffill')
-    
-    # Gleitende Durchschnitte der AD-Ratio
     df['ad_ratio_ma3'] = df['ad_ratio'].rolling(3).mean()
     df['ad_ratio_ma5'] = df['ad_ratio'].rolling(5).mean()
     
-    # Distribution Days (zum Vergleich)
     df['volume'] = sp500['Volume'] if 'Volume' in sp500.columns else pd.Series(0, index=sp500.index)
     df['volume_ma50'] = df['volume'].rolling(50).mean()
     df['distribution_day'] = ((df['returns'] < -0.01) & (df['volume'] > df['volume_ma50'])).astype(int)
@@ -123,12 +115,19 @@ def backtest_strategy(df, regime_func, name, **kwargs):
     signals['regime'] = 'NEUTRAL'
     signals['position'] = 0.0
     
+    # Bestimmen, welche AD-Ratio-Spalte verwendet werden soll
+    if 'ma_window' in kwargs:
+        ma_window = kwargs.pop('ma_window')
+        ad_col = f'ad_ratio_ma{ma_window}'
+    else:
+        ad_col = 'ad_ratio'
+    
     for i in range(len(df)):
         row = df.iloc[i]
-        if kwargs:
+        if ad_col in df.columns:
             regime = regime_func(
                 row['vix'], row['vix3m'], row['gex'],
-                row['ad_ratio_ma'], row['distribution_days_5'],
+                row[ad_col], row['distribution_days_5'],
                 **kwargs
             )
         else:
@@ -191,25 +190,21 @@ def main():
     
     df = load_data()
     
-    # V2 Backtest
     print("\n🔧 Führe V2-Backtest durch...")
     v2_result = backtest_strategy(df, classify_regime_v2, "V2")
     
-    # V3 mit AD-Ratio MA3
     print("🔧 Führe V3-Backtest durch (AD-Ratio MA3, threshold=-0.01)...")
     v3_ma3_result = backtest_strategy(
         df, classify_regime_v3_ma, "V3 MA3",
-        ad_threshold=-0.01, dd_threshold=3
+        ma_window=3, ad_threshold=-0.01, dd_threshold=3
     )
     
-    # V3 mit AD-Ratio MA5
     print("🔧 Führe V3-Backtest durch (AD-Ratio MA5, threshold=-0.01)...")
     v3_ma5_result = backtest_strategy(
         df, classify_regime_v3_ma, "V3 MA5",
-        ad_threshold=-0.01, dd_threshold=3
+        ma_window=5, ad_threshold=-0.01, dd_threshold=3
     )
     
-    # Vergleich
     print("\n" + "=" * 60)
     print("📊 VERGLEICH V2 vs. V3 (AD-RATIO MA)")
     print("=" * 60)
@@ -231,7 +226,6 @@ def main():
     for regime, count in v3_ma5_result['regime_counts'].items():
         print(f"   {regime}: {count} ({count/len(df)*100:.1f}%)")
     
-    # Analyse der 2022er-Fehltage
     analyze_2022_miss(df, v2_result['signals'], v3_ma3_result['signals'], "MA3")
     
     print("\n" + "=" * 60)
