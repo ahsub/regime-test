@@ -1,6 +1,9 @@
 """
 test_ad_ratio_ma.py – Test AD-Ratio mit gleitendem Durchschnitt
 =================================================================
+
+Dieses Skript testet die AD-Ratio mit gleitenden Durchschnitten (3/5 Tage)
+als Override für classify_regime_v2().
 """
 
 import pandas as pd
@@ -16,30 +19,46 @@ OUTPUT_DIR = DATA_DIR / "results"
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 # =============================================================================
-# 1. Daten laden (lokale market_data.csv)
+# 1. Daten laden
 # =============================================================================
+
+def load_market_returns():
+    """
+    Lädt S&P 500 Renditen mit automatischem Fallback.
+    Versucht: ^GSPC → SPY → ^SPX
+    """
+    tickers = ['^GSPC', 'SPY', '^SPX']
+    for ticker in tickers:
+        try:
+            data = yf.download(ticker, start='2011-01-01', end='2026-08-28', progress=False)
+            if len(data) > 0:
+                print(f"   ✅ {ticker} geladen (als Proxy für S&P 500)")
+                return data['Close'].pct_change()
+        except Exception as e:
+            print(f"   ⚠️ {ticker} fehlgeschlagen: {e}")
+            continue
+    
+    # Fallback: VIX-Renditen (warnen)
+    print("   ⚠️ KEIN S&P 500-Ticker verfügbar! Verwende VIX-Renditen als Proxy.")
+    vix = pd.read_csv(DATA_DIR / "VIX_History.csv", parse_dates=['DATE'])
+    vix = vix.set_index('DATE').sort_index()
+    return vix['CLOSE'].pct_change()
 
 def load_data():
     print("📊 Lade Daten...")
     
-    # 1. S&P 500 Daten aus lokaler market_data.csv laden
-    market_data = pd.read_csv(DATA_DIR / "market_data.csv", index_col=0, parse_dates=True)
+    # 1. S&P 500 Renditen (mit Fallback)
+    returns = load_market_returns()
     
-    if 'SP500_returns' in market_data.columns:
-        returns = market_data['SP500_returns']
-        print("   ✅ S&P 500 Renditen aus market_data.csv geladen")
-    else:
-        returns = market_data['VIX'].pct_change()
-        print("   ⚠️ Keine SP500_returns gefunden, verwende VIX-Renditen als Proxy")
-    
-    # 2. Advance-Decline (NYA)
+    # 2. Advance-Decline (NYA) – weiterhin von yfinance
     try:
         nya = yf.download('^NYA', start='2011-01-01', end='2026-08-28', progress=False)
         ad_line = nya['Close']
         print("   ✅ NYA-Daten geladen")
     except Exception as e:
         print(f"   ⚠️ NYA nicht verfügbar, überspringe AD-Ratio")
-        ad_line = pd.Series(index=market_data.index, data=np.nan)
+        # Dummy-Index für Alignierung
+        ad_line = pd.Series(index=returns.index, data=np.nan)
     
     ad_ratio = ad_line.pct_change()
     
@@ -59,8 +78,8 @@ def load_data():
     gex = gex['GEX'] if 'GEX' in gex.columns else gex['gex']
     
     # 6. Zusammenführen
-    df = pd.DataFrame(index=market_data.index)
-    df['returns'] = returns.reindex(df.index, method='ffill')
+    df = pd.DataFrame(index=returns.index)
+    df['returns'] = returns
     df['vix'] = vix.reindex(df.index, method='ffill')
     df['vix3m'] = vix3m.reindex(df.index, method='ffill')
     df['gex'] = gex.reindex(df.index, method='ffill')
@@ -119,6 +138,7 @@ def classify_regime_v3_ma(vix, vix3m, gex, ad_ratio_ma, distribution_days,
 # =============================================================================
 
 def backtest_strategy(df, regime_func, name, **kwargs):
+    """Führt einen Backtest für eine Regime-Funktion durch."""
     signals = pd.DataFrame(index=df.index)
     signals['regime'] = 'NEUTRAL'
     signals['position'] = 0.0
@@ -171,6 +191,7 @@ def backtest_strategy(df, regime_func, name, **kwargs):
 # =============================================================================
 
 def analyze_2022_miss(df, v2_signals, v3_signals, label):
+    """Analysiert die 2022er-Fehlklassifikationen."""
     print("\n" + "=" * 60)
     print(f"📊 ANALYSE DER 2022ER-FEHLKLASSIFIKATIONEN ({label})")
     print("=" * 60)
