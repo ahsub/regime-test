@@ -23,21 +23,24 @@ def load_intraday_data():
     if len(spy_intraday) == 0:
         print("❌ Keine Intraday-Daten für SPY verfügbar.")
         return None, None, None
+    
+    # Index auf datetime64[us] ohne Zeitzone normalisieren
+    spy_intraday.index = pd.to_datetime(spy_intraday.index).tz_localize(None)
     print(f"   ✅ SPY Intraday: {len(spy_intraday)} Bars")
     
     vix_intraday = yf.download('^VIX', interval='60m', period='2y', progress=False)
     if len(vix_intraday) > 0:
+        vix_intraday.index = pd.to_datetime(vix_intraday.index).tz_localize(None)
         print(f"   ✅ VIX Intraday: {len(vix_intraday)} Bars")
     else:
         print("   ⚠️ Keine Intraday-Daten für VIX verfügbar.")
         vix_intraday = None
 
-    # Lade VIX3M Intraday-Daten (falls verfügbar)
-    # Hinweis: VIX3M wird von Yahoo Finance nicht als Intraday-Ticker angeboten.
-    # Wir verwenden daher den täglichen VIX3M-Wert als Proxy.
+    # VIX3M täglich laden
     print("   ℹ️  VIX3M Intraday nicht verfügbar – verwende täglichen VIX3M als Proxy.")
     vix3m_daily = pd.read_csv(DATA_DIR / "VIX3M_History.csv", parse_dates=['DATE'])
     vix3m_daily = vix3m_daily.set_index('DATE').sort_index()
+    vix3m_daily.index = pd.to_datetime(vix3m_daily.index).tz_localize(None)
     vix3m_daily = vix3m_daily['CLOSE']
     
     return spy_intraday, vix_intraday, vix3m_daily
@@ -59,15 +62,14 @@ def backtest_intraday(spy_df, vix_df, vix3m_series):
     # 1. Intraday-Renditen
     spy_df['returns'] = spy_df['Close'].pct_change()
     
-    # 2. Intraday-Volatilität (5-Stunden-Fenster, da 20 Stunden zu lang für Intraday)
-    spy_df['volatility_short'] = spy_df['returns'].rolling(5).std() * np.sqrt(252 * 6.5)
+    # 2. Intraday-Volatilität (5-Stunden-Fenster)
+    spy_df['volatility'] = spy_df['returns'].rolling(5).std() * np.sqrt(252 * 6.5)
     
     # 3. Intraday-VIX auf SPY-Index alignieren
     if vix_df is not None and len(vix_df) > 0:
         vix_aligned = vix_df['Close'].reindex(spy_df.index, method='ffill')
         spy_df['vix'] = vix_aligned
     else:
-        # Fallback: Konstanter VIX-Wert (sollte nicht vorkommen)
         spy_df['vix'] = 20.0
     
     # 4. VIX3M (täglich) auf Intraday-Index alignieren
@@ -80,7 +82,6 @@ def backtest_intraday(spy_df, vix_df, vix3m_series):
     
     print("🔧 Generiere Intraday-Signale...")
     
-    # Definiere die Regime-Logik (identisch zum täglichen Modell)
     def get_regime(vix, vix3m):
         if vix is None or vix3m is None or vix <= 0:
             return "NEUTRAL"
@@ -90,8 +91,7 @@ def backtest_intraday(spy_df, vix_df, vix3m_series):
         elif ratio < 1.05:
             return "POST_PANIC_REVERSION"
         else:
-            # Für Intraday verwenden wir die kurzfristige Volatilität als Proxy für BULL_FRAGILE
-            return "BULL_QUIET"  # Vereinfacht, da wir hier kein VIX-Level für 25 haben
+            return "BULL_FRAGILE" if vix > 25 else "BULL_QUIET"
     
     # Iteriere mit itertuples()
     regimes = []
@@ -126,7 +126,6 @@ def backtest_intraday(spy_df, vix_df, vix3m_series):
 
 def backtest_daily(returns):
     print("\n🔧 Führe täglichen Backtest durch...")
-    # Entferne NaN-Werte zu Beginn
     returns_clean = returns.dropna()
     if len(returns_clean) == 0:
         return {'sharpe_ratio': 0.0, 'total_return': 0.0, 'n_days': 0}
@@ -142,7 +141,6 @@ def backtest_daily(returns):
     
     strategy_cum = (1 + strategy_returns).cumprod()
     
-    # Sicherer Zugriff
     if len(strategy_cum) > 0:
         last_val = strategy_cum.iloc[-1]
         if isinstance(last_val, pd.Series):
