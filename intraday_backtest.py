@@ -40,7 +40,7 @@ def load_daily_data():
     return daily_returns
 
 # =============================================================================
-# 2. BACKTEST-FUNKTIONEN
+# 2. BACKTEST-FUNKTIONEN (KORRIGIERT)
 # =============================================================================
 
 def backtest_intraday(spy_df, vix_df=None):
@@ -53,14 +53,28 @@ def backtest_intraday(spy_df, vix_df=None):
         spy_df['vix_ma20'] = spy_df['vix'].rolling(20).mean()
         spy_df['vix_spread'] = spy_df['vix'] / spy_df['vix_ma20']
     else:
-        spy_df['vix_spread'] = 1.0
+        # Fallback: verwende die Volatilität als Proxy
+        spy_df['vix_spread'] = 1.0  # Neutraler Startwert
+    
     spy_df = spy_df.dropna()
     print(f"   ✅ {len(spy_df)} Intraday-Bars mit Features")
     
     print("🔧 Generiere Intraday-Signale...")
+    
+    # Erstelle eine Kopie, um die Series-zu-skalar-Konvertierung zu umgehen
     def get_regime(row):
-        vix_spread = row.get('vix_spread', 1.0)
-        volatility = row.get('volatility', 0.2)
+        # Sichere Extraktion der Werte
+        if pd.isna(row['vix_spread']):
+            vix_spread = 1.0
+        else:
+            vix_spread = row['vix_spread']
+        
+        if pd.isna(row['volatility']):
+            volatility = 0.2
+        else:
+            volatility = row['volatility']
+        
+        # Regime-Logik
         if vix_spread < 0.98:
             return "STRESS_UNSTABLE"
         elif vix_spread < 1.05:
@@ -68,8 +82,13 @@ def backtest_intraday(spy_df, vix_df=None):
         else:
             return "BULL_FRAGILE" if volatility > 0.30 else "BULL_QUIET"
     
+    # Iteriere über die Zeilen, um sicherzustellen, dass jede Zeile als Series behandelt wird
+    regimes = []
+    for idx, row in spy_df.iterrows():
+        regimes.append(get_regime(row))
+    
     signals = pd.DataFrame(index=spy_df.index)
-    signals['regime'] = spy_df.apply(get_regime, axis=1)
+    signals['regime'] = regimes
     signals['position'] = 0.0
     signals.loc[signals['regime'] != 'STRESS_UNSTABLE', 'position'] = 1.0
     
