@@ -22,31 +22,43 @@ OUTPUT_DIR.mkdir(exist_ok=True)
 def load_data():
     print("📊 Lade Daten...")
     
-    sp500 = yf.download('^GSPC', start='2011-01-01', end='2026-08-28', progress=False)
+    # 1. S&P 500 Daten (SPY statt ^GSPC)
+    try:
+        sp500 = yf.download('SPY', start='2011-01-01', end='2026-08-28', progress=False)
+        print("   ✅ SPY-Daten geladen (als Proxy für S&P 500)")
+    except Exception as e:
+        print(f"   ⚠️ SPY nicht verfügbar, versuche ^SPX...")
+        sp500 = yf.download('^SPX', start='2011-01-01', end='2026-08-28', progress=False)
+    
     returns = sp500['Close'].pct_change()
     
+    # 2. Advance-Decline (NYA)
     try:
         nya = yf.download('^NYA', start='2011-01-01', end='2026-08-28', progress=False)
         ad_line = nya['Close']
         print("   ✅ NYA-Daten geladen")
     except Exception as e:
-        print(f"   ⚠️ NYA nicht verfügbar, verwende S&P 500 als Proxy")
+        print(f"   ⚠️ NYA nicht verfügbar, verwende SPY als Proxy")
         ad_line = sp500['Close']
     
     ad_ratio = ad_line.pct_change()
     
+    # 3. VIX
     vix = pd.read_csv(DATA_DIR / "VIX_History.csv", parse_dates=['DATE'])
     vix = vix.set_index('DATE').sort_index()
     vix = vix['CLOSE']
     
+    # 4. VIX3M
     vix3m = pd.read_csv(DATA_DIR / "VIX3M_History.csv", parse_dates=['DATE'])
     vix3m = vix3m.set_index('DATE').sort_index()
     vix3m = vix3m['CLOSE']
     
+    # 5. GEX
     gex = pd.read_csv(DATA_DIR / "DIX.csv", parse_dates=['date'])
     gex = gex.set_index('date').sort_index()
     gex = gex['GEX'] if 'GEX' in gex.columns else gex['gex']
     
+    # 6. Zusammenführen
     df = pd.DataFrame(index=sp500.index)
     df['returns'] = returns
     df['vix'] = vix.reindex(df.index, method='ffill')
@@ -56,6 +68,7 @@ def load_data():
     df['ad_ratio_ma3'] = df['ad_ratio'].rolling(3).mean()
     df['ad_ratio_ma5'] = df['ad_ratio'].rolling(5).mean()
     
+    # 7. Distribution Days
     df['volume'] = sp500['Volume'] if 'Volume' in sp500.columns else pd.Series(0, index=sp500.index)
     df['volume_ma50'] = df['volume'].rolling(50).mean()
     df['distribution_day'] = ((df['returns'] < -0.01) & (df['volume'] > df['volume_ma50'])).astype(int)
