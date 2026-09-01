@@ -16,21 +16,21 @@ OUTPUT_DIR = DATA_DIR / "results"
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 # =============================================================================
-# 1. Daten laden
+# 1. Daten laden (lokale market_data.csv)
 # =============================================================================
 
 def load_data():
     print("📊 Lade Daten...")
     
-    # 1. S&P 500 Daten (SPY statt ^GSPC)
-    try:
-        sp500 = yf.download('SPY', start='2011-01-01', end='2026-08-28', progress=False)
-        print("   ✅ SPY-Daten geladen (als Proxy für S&P 500)")
-    except Exception as e:
-        print(f"   ⚠️ SPY nicht verfügbar, versuche ^SPX...")
-        sp500 = yf.download('^SPX', start='2011-01-01', end='2026-08-28', progress=False)
+    # 1. S&P 500 Daten aus lokaler market_data.csv laden
+    market_data = pd.read_csv(DATA_DIR / "market_data.csv", index_col=0, parse_dates=True)
     
-    returns = sp500['Close'].pct_change()
+    if 'SP500_returns' in market_data.columns:
+        returns = market_data['SP500_returns']
+        print("   ✅ S&P 500 Renditen aus market_data.csv geladen")
+    else:
+        returns = market_data['VIX'].pct_change()
+        print("   ⚠️ Keine SP500_returns gefunden, verwende VIX-Renditen als Proxy")
     
     # 2. Advance-Decline (NYA)
     try:
@@ -38,8 +38,8 @@ def load_data():
         ad_line = nya['Close']
         print("   ✅ NYA-Daten geladen")
     except Exception as e:
-        print(f"   ⚠️ NYA nicht verfügbar, verwende SPY als Proxy")
-        ad_line = sp500['Close']
+        print(f"   ⚠️ NYA nicht verfügbar, überspringe AD-Ratio")
+        ad_line = pd.Series(index=market_data.index, data=np.nan)
     
     ad_ratio = ad_line.pct_change()
     
@@ -59,8 +59,8 @@ def load_data():
     gex = gex['GEX'] if 'GEX' in gex.columns else gex['gex']
     
     # 6. Zusammenführen
-    df = pd.DataFrame(index=sp500.index)
-    df['returns'] = returns
+    df = pd.DataFrame(index=market_data.index)
+    df['returns'] = returns.reindex(df.index, method='ffill')
     df['vix'] = vix.reindex(df.index, method='ffill')
     df['vix3m'] = vix3m.reindex(df.index, method='ffill')
     df['gex'] = gex.reindex(df.index, method='ffill')
@@ -68,10 +68,8 @@ def load_data():
     df['ad_ratio_ma3'] = df['ad_ratio'].rolling(3).mean()
     df['ad_ratio_ma5'] = df['ad_ratio'].rolling(5).mean()
     
-    # 7. Distribution Days
-    df['volume'] = sp500['Volume'] if 'Volume' in sp500.columns else pd.Series(0, index=sp500.index)
-    df['volume_ma50'] = df['volume'].rolling(50).mean()
-    df['distribution_day'] = ((df['returns'] < -0.01) & (df['volume'] > df['volume_ma50'])).astype(int)
+    # 7. Distribution Days (vereinfacht ohne Volumen)
+    df['distribution_day'] = (df['returns'] < -0.01).astype(int)
     df['distribution_days_5'] = df['distribution_day'].rolling(5).sum()
     
     df = df.dropna()
@@ -117,23 +115,20 @@ def classify_regime_v3_ma(vix, vix3m, gex, ad_ratio_ma, distribution_days,
     return regime
 
 # =============================================================================
-# 4. Backtest-Funktion (KORRIGIERT)
+# 4. Backtest-Funktion
 # =============================================================================
 
 def backtest_strategy(df, regime_func, name, **kwargs):
-    """Führt einen Backtest für eine Regime-Funktion durch."""
     signals = pd.DataFrame(index=df.index)
     signals['regime'] = 'NEUTRAL'
     signals['position'] = 0.0
     
-    # Bestimmen, welche AD-Ratio-Spalte verwendet werden soll
     if 'ma_window' in kwargs:
         ma_window = kwargs.get('ma_window')
         ad_col = f'ad_ratio_ma{ma_window}'
     else:
         ad_col = 'ad_ratio'
     
-    # Prüfen, ob die Regime-Funktion zusätzliche Parameter erwartet
     sig = inspect.signature(regime_func)
     num_params = len(sig.parameters)
     
@@ -141,12 +136,9 @@ def backtest_strategy(df, regime_func, name, **kwargs):
         row = df.iloc[i]
         
         if num_params == 3:
-            # V2: nur 3 Parameter (vix, vix3m, gex)
             regime = regime_func(row['vix'], row['vix3m'], row['gex'])
         else:
-            # V3: mit zusätzlichen Parametern
             if ad_col in df.columns:
-                # Entferne 'ma_window' aus kwargs für den Aufruf
                 call_kwargs = {k: v for k, v in kwargs.items() if k != 'ma_window'}
                 regime = regime_func(
                     row['vix'], row['vix3m'], row['gex'],
@@ -179,7 +171,6 @@ def backtest_strategy(df, regime_func, name, **kwargs):
 # =============================================================================
 
 def analyze_2022_miss(df, v2_signals, v3_signals, label):
-    """Analysiert die 2022er-Fehlklassifikationen."""
     print("\n" + "=" * 60)
     print(f"📊 ANALYSE DER 2022ER-FEHLKLASSIFIKATIONEN ({label})")
     print("=" * 60)
