@@ -57,34 +57,25 @@ def load_daily_data():
 def backtest_intraday(spy_df, vix_df, vix3m_series):
     print("\n🔧 Berechne Intraday-Features...")
     
-    # 1. Intraday-Renditen
+    # 1. Berechne die Renditen
     spy_df['returns'] = spy_df['Close'].pct_change()
     
-    # 2. Intraday-Volatilität (5-Stunden-Fenster)
+    # 2. Berechne die Volatilität (5-Stunden-Fenster)
     spy_df['volatility'] = spy_df['returns'].rolling(5).std() * np.sqrt(252 * 6.5)
     
-    # 3. Intraday-VIX auf SPY-Index alignieren
+    # 3. Hol die VIX-Daten
     if vix_df is not None and len(vix_df) > 0:
         vix_aligned = vix_df['Close'].reindex(spy_df.index, method='ffill')
         spy_df['vix'] = vix_aligned
     else:
         spy_df['vix'] = 20.0
     
-    # 4. VIX3M auf Intraday-Index alignieren
+    # 4. Hol die VIX3M-Daten
     vix3m_aligned = vix3m_series.reindex(spy_df.index, method='ffill')
     spy_df['vix3m'] = vix3m_aligned
     
-    # 5. Prüfe, ob die Spalten existieren
-    required_cols = ['returns', 'vix', 'vix3m']
-    existing_cols = [col for col in required_cols if col in spy_df.columns]
-    
-    if len(existing_cols) < len(required_cols):
-        missing = set(required_cols) - set(existing_cols)
-        print(f"   ⚠️ Fehlende Spalten: {missing}")
-        for col in missing:
-            spy_df[col] = 1.0
-    
-    spy_df = spy_df.dropna(subset=required_cols)
+    # 5. Entferne Zeilen mit fehlenden Werten
+    spy_df = spy_df.dropna()
     print(f"   ✅ {len(spy_df)} Intraday-Bars mit Features")
     
     print("🔧 Generiere Intraday-Signale...")
@@ -100,10 +91,11 @@ def backtest_intraday(spy_df, vix_df, vix3m_series):
         else:
             return "BULL_FRAGILE" if vix > 25 else "BULL_QUIET"
     
+    # 6. Wende die Regime-Logik auf jede Zeile an
     regimes = []
-    for row in spy_df.itertuples():
-        vix = getattr(row, 'vix', 20.0)
-        vix3m = getattr(row, 'vix3m', 20.0)
+    for idx, row in spy_df.iterrows():
+        vix = row['vix'] if 'vix' in row else 20.0
+        vix3m = row['vix3m'] if 'vix3m' in row else 20.0
         regimes.append(get_regime(vix, vix3m))
     
     signals = pd.DataFrame(index=spy_df.index)
@@ -111,7 +103,7 @@ def backtest_intraday(spy_df, vix_df, vix3m_series):
     signals['position'] = 0.0
     signals.loc[signals['regime'] != 'STRESS_UNSTABLE', 'position'] = 1.0
     
-    # 6. Performance berechnen
+    # 7. Performance berechnen
     positions = signals['position'].shift(1).fillna(0)
     strategy_returns = positions * spy_df['returns']
     excess_returns = strategy_returns - 0.02/252/6.5
