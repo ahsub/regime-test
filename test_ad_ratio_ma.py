@@ -1,9 +1,6 @@
 """
 test_ad_ratio_ma.py – Test AD-Ratio mit gleitendem Durchschnitt
 =================================================================
-
-Dieses Skript testet die AD-Ratio mit gleitenden Durchschnitten (3/5 Tage)
-als Override für classify_regime_v2().
 """
 
 import pandas as pd
@@ -11,6 +8,7 @@ import numpy as np
 from pathlib import Path
 import warnings
 import yfinance as yf
+import inspect
 warnings.filterwarnings('ignore')
 
 DATA_DIR = Path(__file__).parent / "data"
@@ -106,7 +104,7 @@ def classify_regime_v3_ma(vix, vix3m, gex, ad_ratio_ma, distribution_days,
     return regime
 
 # =============================================================================
-# 4. Backtest-Funktion
+# 4. Backtest-Funktion (KORRIGIERT)
 # =============================================================================
 
 def backtest_strategy(df, regime_func, name, **kwargs):
@@ -117,21 +115,33 @@ def backtest_strategy(df, regime_func, name, **kwargs):
     
     # Bestimmen, welche AD-Ratio-Spalte verwendet werden soll
     if 'ma_window' in kwargs:
-        ma_window = kwargs.pop('ma_window')
+        ma_window = kwargs.get('ma_window')
         ad_col = f'ad_ratio_ma{ma_window}'
     else:
         ad_col = 'ad_ratio'
     
+    # Prüfen, ob die Regime-Funktion zusätzliche Parameter erwartet
+    sig = inspect.signature(regime_func)
+    num_params = len(sig.parameters)
+    
     for i in range(len(df)):
         row = df.iloc[i]
-        if ad_col in df.columns:
-            regime = regime_func(
-                row['vix'], row['vix3m'], row['gex'],
-                row[ad_col], row['distribution_days_5'],
-                **kwargs
-            )
-        else:
+        
+        if num_params == 3:
+            # V2: nur 3 Parameter (vix, vix3m, gex)
             regime = regime_func(row['vix'], row['vix3m'], row['gex'])
+        else:
+            # V3: mit zusätzlichen Parametern
+            if ad_col in df.columns:
+                # Entferne 'ma_window' aus kwargs für den Aufruf
+                call_kwargs = {k: v for k, v in kwargs.items() if k != 'ma_window'}
+                regime = regime_func(
+                    row['vix'], row['vix3m'], row['gex'],
+                    row[ad_col], row['distribution_days_5'],
+                    **call_kwargs
+                )
+            else:
+                regime = regime_func(row['vix'], row['vix3m'], row['gex'])
         
         signals.iloc[i, 0] = regime
         signals.iloc[i, 1] = 0.0 if regime == "STRESS_UNSTABLE" else 1.0
