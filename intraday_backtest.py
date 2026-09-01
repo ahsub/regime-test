@@ -1,6 +1,6 @@
 """
-intraday_backtest_yf.py – Intraday-Backtest mit Yahoo Finance
-==============================================================
+intraday_backtest.py – Intraday-Backtest mit Yahoo Finance
+===========================================================
 
 Dieses Skript testet 60-Minuten-Daten für SPY und VIX (letzte 730 Tage)
 mit Yahoo Finance.
@@ -31,7 +31,7 @@ def load_intraday_data():
     spy_intraday = yf.download('SPY', interval='60m', period='2y', progress=False)
     if len(spy_intraday) == 0:
         print("❌ Keine Intraday-Daten für SPY verfügbar.")
-        return None
+        return None, None
     
     print(f"   ✅ SPY Intraday: {len(spy_intraday)} Bars")
     
@@ -54,17 +54,26 @@ def load_daily_data():
     return daily_returns
 
 # =============================================================================
-# 2. INTRADAY-REGIME-ERKENNUNG
+# 2. INTRADAY-REGIME-ERKENNUNG (KORRIGIERT)
 # =============================================================================
 
 def intraday_regime_signal(row):
     """
     Einfache Intraday-Regime-Logik (basierend auf VIX-Spread + Volatilität).
+    Erwartet eine Zeile (row) als pandas Series mit skalaren Werten.
     """
-    # VIX-Spread (vereinfacht: VIX-Spot gegen den gleitenden Durchschnitt)
+    # Extrahiere die Werte aus der Zeile
     vix_spread = row.get('vix_spread', 1.0)
     volatility = row.get('volatility', 0.2)
     
+    # Stelle sicher, dass es sich um skalare Werte handelt
+    # (Für den Fall, dass sie als Series übergeben werden)
+    if isinstance(vix_spread, pd.Series):
+        vix_spread = vix_spread.iloc[-1]
+    if isinstance(volatility, pd.Series):
+        volatility = volatility.iloc[-1]
+    
+    # Regime-Logik
     if vix_spread < 0.98:
         return "STRESS_UNSTABLE"
     elif vix_spread < 1.05:
@@ -99,10 +108,12 @@ def backtest_intraday(spy_df, vix_df=None):
     spy_df = spy_df.dropna()
     print(f"   ✅ {len(spy_df)} Intraday-Bars mit Features")
     
-    # 4. Signale generieren
+    # 4. Signale generieren (mit apply)
     print("🔧 Generiere Intraday-Signale...")
+    
+    # Wende die Funktion zeilenweise an
     signals = pd.DataFrame(index=spy_df.index)
-    signals['regime'] = spy_df.apply(intraday_regime_signal, axis=1)
+    signals['regime'] = spy_df.apply(lambda row: intraday_regime_signal(row), axis=1)
     signals['position'] = 0.0
     signals.loc[signals['regime'] != 'STRESS_UNSTABLE', 'position'] = 1.0
     
