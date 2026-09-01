@@ -21,7 +21,7 @@ warnings.filterwarnings('ignore')
 # 1. KONFIGURATION
 # =============================================================================
 
-ALPHA_VANTAGE_KEY = FYPYAZR6BWJLY254  # <-- Hier Ihren API-Key einfügen
+ALPHA_VANTAGE_KEY = "FYPYAZR6BWJLY254"  # <-- Hier Ihren API-Key einfügen
 
 DATA_DIR = Path(__file__).parent / "data"
 OUTPUT_DIR = DATA_DIR / "results"
