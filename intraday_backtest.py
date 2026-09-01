@@ -74,8 +74,17 @@ def backtest_intraday(spy_df, vix_df, vix3m_series):
     vix3m_aligned = vix3m_series.reindex(spy_df.index, method='ffill')
     spy_df['vix3m'] = vix3m_aligned
     
-    # 5. Entferne Zeilen mit fehlenden Werten
-    spy_df = spy_df.dropna(subset=['returns', 'vix', 'vix3m'])
+    # 5. Prüfe, ob die Spalten existieren
+    required_cols = ['returns', 'vix', 'vix3m']
+    existing_cols = [col for col in required_cols if col in spy_df.columns]
+    
+    if len(existing_cols) < len(required_cols):
+        missing = set(required_cols) - set(existing_cols)
+        print(f"   ⚠️ Fehlende Spalten: {missing}")
+        for col in missing:
+            spy_df[col] = 1.0
+    
+    spy_df = spy_df.dropna(subset=required_cols)
     print(f"   ✅ {len(spy_df)} Intraday-Bars mit Features")
     
     print("🔧 Generiere Intraday-Signale...")
@@ -91,11 +100,10 @@ def backtest_intraday(spy_df, vix_df, vix3m_series):
         else:
             return "BULL_FRAGILE" if vix > 25 else "BULL_QUIET"
     
-    # Iteriere mit itertuples()
     regimes = []
     for row in spy_df.itertuples():
-        vix = row.vix if hasattr(row, 'vix') else 20.0
-        vix3m = row.vix3m if hasattr(row, 'vix3m') else 20.0
+        vix = getattr(row, 'vix', 20.0)
+        vix3m = getattr(row, 'vix3m', 20.0)
         regimes.append(get_regime(vix, vix3m))
     
     signals = pd.DataFrame(index=spy_df.index)
