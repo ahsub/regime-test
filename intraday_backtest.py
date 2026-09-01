@@ -24,7 +24,6 @@ def load_intraday_data():
         print("❌ Keine Intraday-Daten für SPY verfügbar.")
         return None, None, None
     
-    # Index auf datetime64[us] ohne Zeitzone normalisieren
     spy_intraday.index = pd.to_datetime(spy_intraday.index).tz_localize(None)
     print(f"   ✅ SPY Intraday: {len(spy_intraday)} Bars")
     
@@ -36,7 +35,6 @@ def load_intraday_data():
         print("   ⚠️ Keine Intraday-Daten für VIX verfügbar.")
         vix_intraday = None
 
-    # VIX3M täglich laden
     print("   ℹ️  VIX3M Intraday nicht verfügbar – verwende täglichen VIX3M als Proxy.")
     vix3m_daily = pd.read_csv(DATA_DIR / "VIX3M_History.csv", parse_dates=['DATE'])
     vix3m_daily = vix3m_daily.set_index('DATE').sort_index()
@@ -72,7 +70,7 @@ def backtest_intraday(spy_df, vix_df, vix3m_series):
     else:
         spy_df['vix'] = 20.0
     
-    # 4. VIX3M (täglich) auf Intraday-Index alignieren
+    # 4. VIX3M auf Intraday-Index alignieren
     vix3m_aligned = vix3m_series.reindex(spy_df.index, method='ffill')
     spy_df['vix3m'] = vix3m_aligned
     
