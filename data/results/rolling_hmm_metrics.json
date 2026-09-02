@@ -1,0 +1,9 @@
+{
+    "total_return_strategy": 1.7452980113802368,
+    "total_return_market": 9.518283195062676,
+    "sharpe_ratio": 0.17827179359250156,
+    "max_drawdown": -0.37638087369148765,
+    "num_trades": 339,
+    "avg_position": 0.5560224089635855,
+    "n_days": 7497
+}

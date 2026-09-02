@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+env/
+.env/
+
+# IDE
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git-Metadaten
+FETCH_HEAD
+25
+=
+
+# Framework (extern) - NICHT ins Repository
+src/external/market_regime_detection/
+
+# Große Daten-Dateien (optional)
+# data/*.csv
+# data/results/*.csv
+# data/intraday/*.csv
+# results/*.pkl
+src/external/market_regime_detection/

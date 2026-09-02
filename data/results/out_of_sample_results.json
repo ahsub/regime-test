@@ -1,0 +1,31 @@
+{
+    "train": {
+        "total_return_strategy": NaN,
+        "total_return_market": 8.005407351302889,
+        "sharpe_ratio": 0.0,
+        "max_drawdown": NaN,
+        "num_trades": 54,
+        "avg_position": 0.9855762868863306,
+        "n_days": 7557
+    },
+    "test": {
+        "total_return_strategy": NaN,
+        "total_return_market": 1.3758040243250456,
+        "sharpe_ratio": 0.0,
+        "max_drawdown": NaN,
+        "num_trades": 14,
+        "avg_position": 0.9815679233991622,
+        "n_days": 1671
+    },
+    "params": {
+        "bull_quiet": 0.5,
+        "stress": 0.6,
+        "bull_fragile": 0.35,
+        "reversion": 0.3,
+        "confirmation_days": 5,
+        "max_position": 1.0,
+        "min_position": 0.0
+    },
+    "train_period": "1990-01-03 bis 2019-12-31",
+    "test_period": "2020-01-02 bis 2026-08-27"
+}

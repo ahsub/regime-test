@@ -1,0 +1,7 @@
+{
+    "bull_quiet": 0.25,
+    "stress": 0.3,
+    "bull_fragile": 0.2,
+    "reversion": 0.15,
+    "confirmation_days": 1
+}

@@ -1,222 +1,159 @@
 """
-intraday_backtest.py – Intraday-Backtest mit Yahoo Finance
+intraday_backtest.py – Intraday-Backtest
 """
 
 import pandas as pd
 import numpy as np
-import yfinance as yf
 from pathlib import Path
+import matplotlib.pyplot as plt
 import warnings
 warnings.filterwarnings('ignore')
 
-DATA_DIR = Path(__file__).parent / "data"
-OUTPUT_DIR = DATA_DIR / "results"
-OUTPUT_DIR.mkdir(exist_ok=True)
-
-# =============================================================================
-# 1. DATEN LADEN
-# =============================================================================
-
-def load_intraday_data():
-    print("📊 Lade Intraday-Daten (60-Minuten, letzte 730 Tage)...")
-    spy_intraday = yf.download('SPY', interval='60m', period='2y', progress=False)
-    if len(spy_intraday) == 0:
-        print("❌ Keine Intraday-Daten für SPY verfügbar.")
-        return None, None, None
+def calculate_performance(df: pd.DataFrame, price_col: str = 'SPY') -> dict:
+    """Berechnet Performance-Kennzahlen."""
+    df = df.copy()
+    df = df.dropna(subset=[price_col, 'position'])
     
-    spy_intraday.index = pd.to_datetime(spy_intraday.index).tz_localize(None)
-    print(f"   ✅ SPY Intraday: {len(spy_intraday)} Bars")
+    if len(df) < 10:
+        return {
+            'total_return': 0,
+            'sharpe_ratio': 0,
+            'max_drawdown': 0,
+            'trades': 0,
+            'avg_position': 0,
+            'n_days': len(df)
+        }
     
-    vix_intraday = yf.download('^VIX', interval='60m', period='2y', progress=False)
-    if len(vix_intraday) > 0:
-        vix_intraday.index = pd.to_datetime(vix_intraday.index).tz_localize(None)
-        print(f"   ✅ VIX Intraday: {len(vix_intraday)} Bars")
+    df['returns'] = df[price_col].pct_change()
+    df['strategy_returns'] = df['position'].shift(1) * df['returns']
+    df['cumulative_returns'] = (1 + df['strategy_returns']).cumprod()
+    
+    total_return = df['cumulative_returns'].iloc[-1] - 1
+    
+    if df['strategy_returns'].std() > 0:
+        sharpe = df['strategy_returns'].mean() / df['strategy_returns'].std() * np.sqrt(252 * 6.5)
     else:
-        print("   ⚠️ Keine Intraday-Daten für VIX verfügbar.")
-        vix_intraday = None
-
-    print("   ℹ️  VIX3M Intraday nicht verfügbar – verwende täglichen VIX3M als Proxy.")
-    vix3m_daily = pd.read_csv(DATA_DIR / "VIX3M_History.csv", parse_dates=['DATE'])
-    vix3m_daily = vix3m_daily.set_index('DATE').sort_index()
-    vix3m_daily.index = pd.to_datetime(vix3m_daily.index).tz_localize(None)
-    vix3m_daily = vix3m_daily['CLOSE']
+        sharpe = 0
     
-    return spy_intraday, vix_intraday, vix3m_daily
-
-def load_daily_data():
-    print("📊 Lade tägliche Daten für Vergleich...")
-    daily_spy = yf.download('SPY', start='2011-01-01', end='2026-08-28', progress=False)
-    daily_returns = daily_spy['Close'].pct_change()
-    print(f"   ✅ Tägliche SPY: {len(daily_spy)} Tage")
-    return daily_returns
-
-# =============================================================================
-# 2. BACKTEST-FUNKTIONEN
-# =============================================================================
-
-def backtest_intraday(spy_df, vix_df, vix3m_series):
-    print("\n🔧 Berechne Intraday-Features...")
+    df['cummax'] = df['cumulative_returns'].cummax()
+    df['drawdown'] = df['cumulative_returns'] / df['cummax'] - 1
+    max_drawdown = df['drawdown'].min()
     
-    # 1. Berechne die Renditen
-    spy_df['returns'] = spy_df['Close'].pct_change()
+    df['position_change'] = df['position'].diff().fillna(0)
+    trades = (df['position_change'].abs() > 0.01).sum()
     
-    # 2. Berechne die Volatilität (5-Stunden-Fenster)
-    spy_df['volatility'] = spy_df['returns'].rolling(5).std() * np.sqrt(252 * 6.5)
-    
-    # 3. Hol die VIX-Daten
-    if vix_df is not None and len(vix_df) > 0:
-        vix_aligned = vix_df['Close'].reindex(spy_df.index, method='ffill')
-        spy_df['vix'] = vix_aligned
-    else:
-        spy_df['vix'] = 20.0
-    
-    # 4. Hol die VIX3M-Daten
-    vix3m_aligned = vix3m_series.reindex(spy_df.index, method='ffill')
-    spy_df['vix3m'] = vix3m_aligned
-    
-    # 5. Entferne Zeilen mit fehlenden Werten
-    spy_df = spy_df.dropna()
-    print(f"   ✅ {len(spy_df)} Intraday-Bars mit Features")
-    
-    print("🔧 Generiere Intraday-Signale...")
-    
-    # Definiere die Regime-Logik als normale Funktion mit sklaren Werten
-    def get_regime(vix, vix3m):
-        # Stelle sicher, dass die Werte skalar sind
-        if isinstance(vix, pd.Series):
-            vix = vix.iloc[0] if len(vix) > 0 else 20.0
-        if isinstance(vix3m, pd.Series):
-            vix3m = vix3m.iloc[0] if len(vix3m) > 0 else 20.0
-        
-        if vix is None or vix3m is None or vix <= 0:
-            return "NEUTRAL"
-        ratio = vix3m / vix
-        if ratio < 0.98:
-            return "STRESS_UNSTABLE"
-        elif ratio < 1.05:
-            return "POST_PANIC_REVERSION"
-        else:
-            return "BULL_FRAGILE" if vix > 25 else "BULL_QUIET"
-    
-    # Wende die Funktion auf jede Zeile an
-    regimes = []
-    for idx, row in spy_df.iterrows():
-        # Extrahiere die Werte als Python-Typen
-        vix = row['vix'] if 'vix' in row else 20.0
-        vix3m = row['vix3m'] if 'vix3m' in row else 20.0
-        
-        # Konvertiere zu skalaren Werten (falls sie Series sind)
-        if isinstance(vix, pd.Series):
-            vix = vix.iloc[0]
-        if isinstance(vix3m, pd.Series):
-            vix3m = vix3m.iloc[0]
-        
-        regimes.append(get_regime(vix, vix3m))
-    
-    signals = pd.DataFrame(index=spy_df.index)
-    signals['regime'] = regimes
-    signals['position'] = 0.0
-    signals.loc[signals['regime'] != 'STRESS_UNSTABLE', 'position'] = 1.0
-    
-    # 7. Performance berechnen
-    positions = signals['position'].shift(1).fillna(0)
-    strategy_returns = positions * spy_df['returns']
-    excess_returns = strategy_returns - 0.02/252/6.5
-    sharpe = np.sqrt(252 * 6.5) * np.mean(excess_returns) / np.std(excess_returns) if np.std(excess_returns) > 0 else 0
-    strategy_cum = (1 + strategy_returns).cumprod()
-    
-    last_val = strategy_cum.iloc[-1] if len(strategy_cum) > 0 else 1.0
-    if isinstance(last_val, pd.Series):
-        last_val = last_val.iloc[0]
-    total_return = float(last_val - 1) if last_val is not None else 0.0
-    
-    return {
-        'sharpe_ratio': float(sharpe),
+    results = {
         'total_return': total_return,
-        'regime_counts': signals['regime'].value_counts().to_dict(),
-        'n_days': len(signals)
+        'sharpe_ratio': sharpe,
+        'max_drawdown': max_drawdown,
+        'trades': trades,
+        'avg_position': df['position'].mean(),
+        'n_days': len(df)
     }
+    
+    return results
 
-def backtest_daily(returns):
-    print("\n🔧 Führe täglichen Backtest durch...")
-    returns_clean = returns.dropna()
-    if len(returns_clean) == 0:
-        return {'sharpe_ratio': 0.0, 'total_return': 0.0, 'n_days': 0}
+def plot_intraday_results(df: pd.DataFrame, price_col: str = 'SPY'):
+    """Erstellt Visualisierungen."""
+    df = df.copy()
+    df = df.dropna(subset=[price_col, 'position'])
     
-    positions = pd.Series(1.0, index=returns_clean.index)
-    strategy_returns = positions.shift(1).fillna(0) * returns_clean
-    excess_returns = strategy_returns - 0.02/252
-    
-    if np.std(excess_returns) > 0:
-        sharpe = np.sqrt(252) * np.mean(excess_returns) / np.std(excess_returns)
-    else:
-        sharpe = 0.0
-    
-    strategy_cum = (1 + strategy_returns).cumprod()
-    
-    if len(strategy_cum) > 0:
-        last_val = strategy_cum.iloc[-1]
-        if isinstance(last_val, pd.Series):
-            last_val = last_val.iloc[0]
-        total_return = float(last_val - 1) if last_val is not None else 0.0
-    else:
-        total_return = 0.0
-    
-    return {
-        'sharpe_ratio': float(sharpe),
-        'total_return': total_return,
-        'n_days': len(returns_clean)
-    }
-
-# =============================================================================
-# 3. HAUPTPROGRAMM
-# =============================================================================
-
-def main():
-    print("=" * 60)
-    print("📈 INTRADAY-BACKTEST (YAHOO FINANCE)")
-    print("=" * 60)
-    
-    spy_intraday, vix_intraday, vix3m_series = load_intraday_data()
-    if spy_intraday is None:
-        print("❌ Abbruch wegen fehlender Daten.")
+    if len(df) < 10:
+        print("⚠️ Zu wenige Daten für Visualisierung")
         return
     
-    daily_returns = load_daily_data()
+    df['returns'] = df[price_col].pct_change()
+    df['strategy_returns'] = df['position'].shift(1) * df['returns']
+    df['cumulative_returns'] = (1 + df['strategy_returns']).cumprod()
     
-    intraday_result = backtest_intraday(spy_intraday, vix_intraday, vix3m_series)
-    daily_result = backtest_daily(daily_returns)
+    fig, axes = plt.subplots(3, 1, figsize=(14, 12))
+    
+    ax1 = axes[0]
+    ax1.plot(df.index, df[price_col], label='SPY Preis', color='blue', alpha=0.7)
+    
+    regime_colors = {
+        'STRESS_UNSTABLE': 'red',
+        'POST_PANIC_REVERSION': 'orange',
+        'BULL_FRAGILE': 'yellow',
+        'BULL_QUIET': 'green',
+        'NEUTRAL': 'gray'
+    }
+    
+    for regime, color in regime_colors.items():
+        mask = df['regime'] == regime
+        if mask.any():
+            ax1.fill_between(df.index, df[price_col].min(), df[price_col].max(), 
+                            where=mask, color=color, alpha=0.1, label=regime)
+    
+    ax1.set_ylabel('Preis')
+    ax1.set_title('Intraday-Preis mit Regimen')
+    ax1.legend(loc='upper left')
+    
+    ax2 = axes[1]
+    ax2.plot(df.index, df['position'], label='Position', color='purple', linewidth=1)
+    ax2.axhline(y=0.5, color='gray', linestyle='--', alpha=0.5)
+    ax2.set_ylabel('Position (0-1)')
+    ax2.set_title('Intraday-Position')
+    ax2.legend(loc='upper left')
+    ax2.set_ylim(-0.1, 1.1)
+    
+    ax3 = axes[2]
+    ax3.plot(df.index, df['cumulative_returns'], label='Strategie', color='green')
+    ax3.axhline(y=1, color='black', linestyle='--', alpha=0.5)
+    ax3.set_ylabel('Kumulative Rendite')
+    ax3.set_title('Intraday-Strategie Performance')
+    ax3.legend(loc='upper left')
+    
+    plt.tight_layout()
+    
+    output_dir = Path(__file__).parent / "results"
+    output_dir.mkdir(exist_ok=True)
+    plt.savefig(output_dir / 'intraday_results.png', dpi=150)
+    print(f"📈 Visualisierung gespeichert: results/intraday_results.png")
+    plt.close()
+
+def main():
+    """Hauptfunktion."""
+    print("=" * 60)
+    print("📊 INTRADAY-BACKTEST")
+    print("=" * 60)
+    
+    data_path = Path(__file__).parent / "data" / "intraday" / "intraday_regimes.csv"
+    
+    if not data_path.exists():
+        print(f"❌ Daten nicht gefunden: {data_path}")
+        print("   Führen Sie zuerst intraday_regime.py aus")
+        return
+    
+    df = pd.read_csv(data_path, index_col=0, parse_dates=True)
+    print(f"📊 Daten geladen: {len(df)} Zeilen")
+    
+    df_clean = df.dropna(subset=['position'])
+    print(f"   Zeilen mit Position: {len(df_clean)}")
+    
+    if len(df_clean) < 10:
+        print("❌ Zu wenige Daten für Backtest")
+        return
+    
+    results = calculate_performance(df_clean, price_col='SPY')
     
     print("\n" + "=" * 60)
-    print("📊 VERGLEICH: INTRADAY vs. TÄGLICH")
+    print("📊 ERGEBNISSE")
     print("=" * 60)
-    print(f"\n{'Kennzahl':<20} | {'Intraday':<15} | {'Täglich':<15} | {'Differenz':<12}")
-    print("-" * 70)
-    print(f"{'Sharpe Ratio':<20} | {intraday_result['sharpe_ratio']:>14.2f} | {daily_result['sharpe_ratio']:>14.2f} | {intraday_result['sharpe_ratio'] - daily_result['sharpe_ratio']:>+11.2f}")
-    print(f"{'Gesamtrendite':<20} | {intraday_result['total_return']:>14.2%} | {daily_result['total_return']:>14.2%} | {intraday_result['total_return'] - daily_result['total_return']:>+11.2%}")
-    print(f"{'Tage/Bars':<20} | {intraday_result['n_days']:>14} | {daily_result['n_days']:>14} | {intraday_result['n_days'] - daily_result['n_days']:>+11}")
+    print(f"   Gesamtrendite:       {results['total_return']*100:.2f}%")
+    print(f"   Sharpe Ratio:        {results['sharpe_ratio']:.2f}")
+    print(f"   Max. Drawdown:       {results['max_drawdown']*100:.2f}%")
+    print(f"   Anzahl Trades:       {results['trades']}")
+    print(f"   Durchschn. Position: {results['avg_position']*100:.1f}%")
+    print(f"   Handelstage:         {results['n_days']}")
     
-    if intraday_result.get('regime_counts'):
-        print(f"\n📊 Intraday-Regime-Verteilung:")
-        for regime, count in intraday_result['regime_counts'].items():
-            print(f"   {regime}: {count} ({count/intraday_result['n_days']*100:.1f}%)")
+    plot_intraday_results(df_clean, price_col='SPY')
     
-    improvement = intraday_result['sharpe_ratio'] - daily_result['sharpe_ratio']
-    print("\n" + "=" * 60)
-    print("📋 FAZIT")
-    print("=" * 60)
-    if improvement > 0.1:
-        print(f"✅ Intraday-Regime-Erkennung ist deutlich besser: +{improvement:.2f} Sharpe")
-    elif improvement > 0.05:
-        print(f"⚠️ Intraday-Regime-Erkennung ist leicht besser: +{improvement:.2f} Sharpe")
-    elif improvement > 0:
-        print(f"⚠️ Intraday-Regime-Erkennung ist minimal besser: +{improvement:.2f} Sharpe")
-    else:
-        print(f"⚠️ Intraday-Regime-Erkennung ist schlechter: {improvement:.2f} Sharpe")
+    results_path = Path(__file__).parent / "results" / "intraday_results.csv"
+    pd.DataFrame([results]).to_csv(results_path, index=False)
+    print(f"\n💾 Ergebnisse gespeichert: {results_path}")
     
-    print("\n" + "=" * 60)
-    print("🏁 INTRADAY-BACKTEST ABGESCHLOSSEN")
-    print("=" * 60)
+    return results
 
 if __name__ == "__main__":
-    main()
+    results = main()

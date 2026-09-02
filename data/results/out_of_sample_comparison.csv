@@ -1,0 +1,3 @@
+Zeitraum,Strategie_Rendite,Markt_Rendite,Sharpe_Ratio,Max_Drawdown,Anzahl_Trades,Ø_Position,Tage
+Training,,8.005407351302889,0.0,,54,0.9855762868863306,7557
+Test,,1.3758040243250456,0.0,,14,0.9815679233991622,1671
