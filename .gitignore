@@ -28,3 +28,5 @@ src/external/market_regime_detection/
 # data/intraday/*.csv
 # results/*.pkl
 src/external/market_regime_detection/
+__pycache__/
+*.pyc
