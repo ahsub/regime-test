@@ -1,0 +1,400 @@
+{
+  "varianten": {
+    "A0 Exakte Replik (Fenster wie bisher, ab HMM-Start)": {
+      "start": "2011-10-20",
+      "ende": "2026-08-27",
+      "tage": 3734,
+      "sharpe": 0.753,
+      "rendite": 4.0318,
+      "max_drawdown": -0.2029,
+      "trades": 261,
+      "avg_position": 0.92,
+      "jahre": {
+        "2011": 0.0376,
+        "2012": 0.1162,
+        "2013": 0.2874,
+        "2014": 0.1282,
+        "2015": -0.022,
+        "2016": 0.0702,
+        "2017": 0.2024,
+        "2018": -0.106,
+        "2019": 0.1977,
+        "2020": 0.2039,
+        "2021": 0.163,
+        "2022": -0.1708,
+        "2023": 0.2603,
+        "2024": 0.1984,
+        "2025": 0.1511,
+        "2026": 0.0996
+      },
+      "stress": {
+        "2015 China/Aug": {
+          "strategie": -0.102,
+          "buy_hold": -0.082
+        },
+        "2018 Volmageddon": {
+          "strategie": -0.067,
+          "buy_hold": -0.0774
+        },
+        "2018 Q4": {
+          "strategie": -0.1258,
+          "buy_hold": -0.1932
+        },
+        "2020 Covid": {
+          "strategie": -0.0709,
+          "buy_hold": -0.3361
+        },
+        "2022 Bärenmarkt": {
+          "strategie": -0.1978,
+          "buy_hold": -0.2495
+        },
+        "2024 Yen-Carry": {
+          "strategie": -0.079,
+          "buy_hold": -0.0767
+        }
+      }
+    },
+    "A Reproduktion alt (2011-01, altes market_data)": {
+      "start": "2011-01-03",
+      "ende": "2026-08-28",
+      "tage": 3937,
+      "sharpe": 0.66,
+      "rendite": 3.5935,
+      "max_drawdown": -0.2029,
+      "trades": 285,
+      "avg_position": 0.914,
+      "jahre": {
+        "2011": -0.0504,
+        "2012": 0.1162,
+        "2013": 0.2874,
+        "2014": 0.1282,
+        "2015": -0.022,
+        "2016": 0.0702,
+        "2017": 0.2024,
+        "2018": -0.106,
+        "2019": 0.1977,
+        "2020": 0.2039,
+        "2021": 0.163,
+        "2022": -0.1708,
+        "2023": 0.2603,
+        "2024": 0.1984,
+        "2025": 0.1511,
+        "2026": 0.0969
+      },
+      "stress": {
+        "2011 US-Downgrade": {
+          "strategie": -0.1951,
+          "buy_hold": -0.182
+        },
+        "2015 China/Aug": {
+          "strategie": -0.102,
+          "buy_hold": -0.082
+        },
+        "2018 Volmageddon": {
+          "strategie": -0.067,
+          "buy_hold": -0.0774
+        },
+        "2018 Q4": {
+          "strategie": -0.1258,
+          "buy_hold": -0.1932
+        },
+        "2020 Covid": {
+          "strategie": -0.0709,
+          "buy_hold": -0.3361
+        },
+        "2022 Bärenmarkt": {
+          "strategie": -0.1978,
+          "buy_hold": -0.2495
+        },
+        "2024 Yen-Carry": {
+          "strategie": -0.079,
+          "buy_hold": -0.0767
+        }
+      }
+    },
+    "B sauber, gleiches Fenster (2011-01)": {
+      "start": "2011-01-03",
+      "ende": "2026-08-28",
+      "tage": 3937,
+      "sharpe": 0.66,
+      "rendite": 3.5935,
+      "max_drawdown": -0.2029,
+      "trades": 285,
+      "avg_position": 0.914,
+      "jahre": {
+        "2011": -0.0504,
+        "2012": 0.1162,
+        "2013": 0.2874,
+        "2014": 0.1282,
+        "2015": -0.022,
+        "2016": 0.0702,
+        "2017": 0.2024,
+        "2018": -0.106,
+        "2019": 0.1977,
+        "2020": 0.2039,
+        "2021": 0.163,
+        "2022": -0.1708,
+        "2023": 0.2603,
+        "2024": 0.1984,
+        "2025": 0.1511,
+        "2026": 0.0969
+      },
+      "stress": {
+        "2011 US-Downgrade": {
+          "strategie": -0.1951,
+          "buy_hold": -0.182
+        },
+        "2015 China/Aug": {
+          "strategie": -0.102,
+          "buy_hold": -0.082
+        },
+        "2018 Volmageddon": {
+          "strategie": -0.067,
+          "buy_hold": -0.0774
+        },
+        "2018 Q4": {
+          "strategie": -0.1258,
+          "buy_hold": -0.1932
+        },
+        "2020 Covid": {
+          "strategie": -0.0709,
+          "buy_hold": -0.3361
+        },
+        "2022 Bärenmarkt": {
+          "strategie": -0.1978,
+          "buy_hold": -0.2495
+        },
+        "2024 Yen-Carry": {
+          "strategie": -0.079,
+          "buy_hold": -0.0767
+        }
+      }
+    },
+    "C sauber, GEX-Fenster (2011-05)": {
+      "start": "2011-05-02",
+      "ende": "2026-08-28",
+      "tage": 3855,
+      "sharpe": 0.649,
+      "rendite": 3.3682,
+      "max_drawdown": -0.2029,
+      "trades": 283,
+      "avg_position": 0.913,
+      "jahre": {
+        "2011": -0.097,
+        "2012": 0.1162,
+        "2013": 0.2874,
+        "2014": 0.1282,
+        "2015": -0.022,
+        "2016": 0.0702,
+        "2017": 0.2024,
+        "2018": -0.106,
+        "2019": 0.1977,
+        "2020": 0.2039,
+        "2021": 0.163,
+        "2022": -0.1708,
+        "2023": 0.2603,
+        "2024": 0.1984,
+        "2025": 0.1511,
+        "2026": 0.0969
+      },
+      "stress": {
+        "2011 US-Downgrade": {
+          "strategie": -0.1951,
+          "buy_hold": -0.182
+        },
+        "2015 China/Aug": {
+          "strategie": -0.102,
+          "buy_hold": -0.082
+        },
+        "2018 Volmageddon": {
+          "strategie": -0.067,
+          "buy_hold": -0.0774
+        },
+        "2018 Q4": {
+          "strategie": -0.1258,
+          "buy_hold": -0.1932
+        },
+        "2020 Covid": {
+          "strategie": -0.0709,
+          "buy_hold": -0.3361
+        },
+        "2022 Bärenmarkt": {
+          "strategie": -0.1978,
+          "buy_hold": -0.2495
+        },
+        "2024 Yen-Carry": {
+          "strategie": -0.079,
+          "buy_hold": -0.0767
+        }
+      }
+    },
+    "D sauber, ohne GEX (2011-05)": {
+      "start": "2011-05-02",
+      "ende": "2026-08-28",
+      "tage": 3855,
+      "sharpe": 0.632,
+      "rendite": 3.2683,
+      "max_drawdown": -0.2378,
+      "trades": 229,
+      "avg_position": 0.928,
+      "jahre": {
+        "2011": -0.1028,
+        "2012": 0.1032,
+        "2013": 0.2874,
+        "2014": 0.1282,
+        "2015": -0.0217,
+        "2016": 0.0761,
+        "2017": 0.2024,
+        "2018": -0.106,
+        "2019": 0.1977,
+        "2020": 0.2035,
+        "2021": 0.208,
+        "2022": -0.191,
+        "2023": 0.2368,
+        "2024": 0.1984,
+        "2025": 0.1511,
+        "2026": 0.0914
+      },
+      "stress": {
+        "2011 US-Downgrade": {
+          "strategie": -0.1951,
+          "buy_hold": -0.182
+        },
+        "2015 China/Aug": {
+          "strategie": -0.1017,
+          "buy_hold": -0.082
+        },
+        "2018 Volmageddon": {
+          "strategie": -0.067,
+          "buy_hold": -0.0774
+        },
+        "2018 Q4": {
+          "strategie": -0.1258,
+          "buy_hold": -0.1932
+        },
+        "2020 Covid": {
+          "strategie": -0.0709,
+          "buy_hold": -0.3361
+        },
+        "2022 Bärenmarkt": {
+          "strategie": -0.233,
+          "buy_hold": -0.2495
+        },
+        "2024 Yen-Carry": {
+          "strategie": -0.079,
+          "buy_hold": -0.0767
+        }
+      }
+    },
+    "E ohne GEX, lang (ab VIX3M-Beginn)": {
+      "start": "2009-09-18",
+      "ende": "2026-09-25",
+      "tage": 4281,
+      "sharpe": 0.62,
+      "rendite": 3.9208,
+      "max_drawdown": -0.2378,
+      "trades": 265,
+      "avg_position": 0.928,
+      "jahre": {
+        "2009": 0.0273,
+        "2010": 0.051,
+        "2011": -0.0459,
+        "2012": 0.1032,
+        "2013": 0.2874,
+        "2014": 0.1282,
+        "2015": -0.0217,
+        "2016": 0.0761,
+        "2017": 0.2024,
+        "2018": -0.106,
+        "2019": 0.1977,
+        "2020": 0.2035,
+        "2021": 0.208,
+        "2022": -0.191,
+        "2023": 0.2368,
+        "2024": 0.1984,
+        "2025": 0.1511,
+        "2026": 0.0959
+      },
+      "stress": {
+        "2011 US-Downgrade": {
+          "strategie": -0.1951,
+          "buy_hold": -0.182
+        },
+        "2015 China/Aug": {
+          "strategie": -0.1017,
+          "buy_hold": -0.082
+        },
+        "2018 Volmageddon": {
+          "strategie": -0.067,
+          "buy_hold": -0.0774
+        },
+        "2018 Q4": {
+          "strategie": -0.1258,
+          "buy_hold": -0.1932
+        },
+        "2020 Covid": {
+          "strategie": -0.0709,
+          "buy_hold": -0.3361
+        },
+        "2022 Bärenmarkt": {
+          "strategie": -0.233,
+          "buy_hold": -0.2495
+        },
+        "2024 Yen-Carry": {
+          "strategie": -0.079,
+          "buy_hold": -0.0767
+        }
+      }
+    }
+  },
+  "buy_hold": {
+    "A0 Exakte Replik (Fenster wie bisher, ab HMM-Start)": {
+      "start": "2011-10-20",
+      "ende": "2026-08-27",
+      "tage": 3734,
+      "sharpe": 0.71,
+      "rendite": 5.3899,
+      "max_drawdown": -0.3392
+    },
+    "A Reproduktion alt (2011-01, altes market_data)": {
+      "start": "2011-01-03",
+      "ende": "2026-08-28",
+      "tage": 3937,
+      "sharpe": 0.647,
+      "rendite": 5.1319,
+      "max_drawdown": -0.3392
+    },
+    "B sauber, gleiches Fenster (2011-01)": {
+      "start": "2011-01-03",
+      "ende": "2026-08-28",
+      "tage": 3937,
+      "sharpe": 0.647,
+      "rendite": 5.1319,
+      "max_drawdown": -0.3392
+    },
+    "C sauber, GEX-Fenster (2011-05)": {
+      "start": "2011-05-02",
+      "ende": "2026-08-28",
+      "tage": 3855,
+      "sharpe": 0.628,
+      "rendite": 4.6554,
+      "max_drawdown": -0.3392
+    },
+    "D sauber, ohne GEX (2011-05)": {
+      "start": "2011-05-02",
+      "ende": "2026-08-28",
+      "tage": 3855,
+      "sharpe": 0.628,
+      "rendite": 4.6554,
+      "max_drawdown": -0.3392
+    },
+    "E ohne GEX, lang (ab VIX3M-Beginn)": {
+      "start": "2009-09-18",
+      "ende": "2026-09-25",
+      "tage": 4281,
+      "sharpe": 0.65,
+      "rendite": 6.2675,
+      "max_drawdown": -0.3392
+    }
+  }
+}
