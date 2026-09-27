@@ -1,0 +1,1076 @@
+{
+  "praeregistrierung_sha256": "964f9f6e82bb61a91599dbf253c35c495ea7f01cffb99e3ab5c69d03e192bee9",
+  "auswahl": {
+    "praeregistrierung_sha256": "964f9f6e82bb61a91599dbf253c35c495ea7f01cffb99e3ab5c69d03e192bee9",
+    "kandidaten": {
+      "S-A": {
+        "param": 0.95,
+        "calmar_dev": 0.0381
+      },
+      "S-B": {
+        "param": 0.4,
+        "calmar_dev": 0.0655
+      },
+      "O-A": {
+        "param": 0.95,
+        "calmar_dev": 0.3548
+      },
+      "O-B": {
+        "param": 0.4,
+        "calmar_dev": 0.2805
+      }
+    },
+    "primaer": "O-A"
+  },
+  "entscheidung_H3": "nicht bestätigt",
+  "primaer": {
+    "O-A": {
+      "param": 0.95,
+      "gegen": "Baseline E",
+      "dd_verbesserung": 0.01785,
+      "calmar": 0.4369,
+      "calmar_ref": 0.4292,
+      "stress_nicht_schlechter": 4,
+      "erfuellt": false
+    }
+  },
+  "sekundaer": {
+    "S-A": {
+      "param": 0.95,
+      "gegen": "Buy & Hold",
+      "dd_verbesserung": 0.09652,
+      "calmar": 0.5385,
+      "calmar_ref": 0.3989,
+      "erfuellt": false
+    },
+    "S-B": {
+      "param": 0.4,
+      "gegen": "Buy & Hold",
+      "dd_verbesserung": 0.0,
+      "calmar": 0.3958,
+      "calmar_ref": 0.3989,
+      "erfuellt": false
+    },
+    "O-B": {
+      "param": 0.4,
+      "gegen": "Baseline E",
+      "dd_verbesserung": 0.0,
+      "calmar": 0.4213,
+      "calmar_ref": 0.4292,
+      "stress_nicht_schlechter": 5,
+      "erfuellt": false
+    }
+  },
+  "sekundaer_erfuellt": "0 von 3",
+  "informationsmehrwert": {
+    "feststellung": "COR1M trifft in nennenswertem Umfang eigenständige Entscheidungen",
+    "je_kandidat": {
+      "S-A": {
+        "dev": {
+          "risiko_aus_tage": 201,
+          "M": 0.7761,
+          "ueberlappung": 0.2239
+        },
+        "conf": {
+          "risiko_aus_tage": 168,
+          "M": 0.5,
+          "ueberlappung": 0.5
+        },
+        "live": {
+          "risiko_aus_tage": 61,
+          "M": 0.5738,
+          "ueberlappung": 0.4262
+        }
+      },
+      "S-B": {
+        "dev": {
+          "risiko_aus_tage": 83,
+          "M": 1.0,
+          "ueberlappung": 0.0
+        },
+        "conf": {
+          "risiko_aus_tage": 31,
+          "M": 1.0,
+          "ueberlappung": 0.0
+        },
+        "live": {
+          "risiko_aus_tage": 7,
+          "M": 1.0,
+          "ueberlappung": 0.0
+        }
+      },
+      "O-A": {
+        "dev": {
+          "risiko_aus_tage": 122,
+          "M": 0.6311,
+          "ueberlappung": 0.3689
+        },
+        "conf": {
+          "risiko_aus_tage": 168,
+          "M": 0.5,
+          "ueberlappung": 0.5
+        },
+        "live": {
+          "risiko_aus_tage": 61,
+          "M": 0.5738,
+          "ueberlappung": 0.4262
+        }
+      },
+      "O-B": {
+        "dev": {
+          "risiko_aus_tage": 74,
+          "M": 1.0,
+          "ueberlappung": 0.0
+        },
+        "conf": {
+          "risiko_aus_tage": 31,
+          "M": 1.0,
+          "ueberlappung": 0.0
+        },
+        "live": {
+          "risiko_aus_tage": 7,
+          "M": 1.0,
+          "ueberlappung": 0.0
+        }
+      }
+    }
+  },
+  "redundanz_niveau": {
+    "dev": {
+      "rho_COR1M_VIX": 0.845,
+      "rho_dCOR1M_dVIX_5T": 0.759,
+      "rho_COR1M_VIX3M_VIX": -0.516
+    },
+    "conf": {
+      "rho_COR1M_VIX": 0.652,
+      "rho_dCOR1M_dVIX_5T": 0.756,
+      "rho_COR1M_VIX3M_VIX": -0.556
+    }
+  },
+  "drawdown_analyse": {
+    "primaer": {
+      "max_dd": -0.22835,
+      "hoch": "2018-01-26",
+      "tief": "2019-01-04",
+      "erholt": "2020-07-22"
+    },
+    "baseline": {
+      "max_dd": -0.2462,
+      "hoch": "2022-01-03",
+      "tief": "2022-10-12",
+      "erholt": "2024-01-23"
+    }
+  },
+  "live_teilfenster": {
+    "baseline_O": {
+      "start": "2022-03-18",
+      "ende": "2026-09-25",
+      "tage": 1135,
+      "cagr": 0.11281,
+      "max_dd": -0.19921,
+      "calmar": 0.5663,
+      "sharpe": 0.6638,
+      "cvar5": -0.02133,
+      "ulcer": 0.06776,
+      "zeit_im_markt": 0.9744,
+      "trades": 57,
+      "stress": {}
+    },
+    "buy_hold": {
+      "start": "2022-03-18",
+      "ende": "2026-09-25",
+      "tage": 1135,
+      "cagr": 0.13001,
+      "max_dd": -0.22769,
+      "calmar": 0.571,
+      "sharpe": 0.6897,
+      "cvar5": -0.02447,
+      "ulcer": 0.07844,
+      "zeit_im_markt": 1.0,
+      "trades": 1,
+      "stress": {}
+    },
+    "S-A-0.95": {
+      "start": "2022-03-18",
+      "ende": "2026-09-25",
+      "tage": 1135,
+      "cagr": 0.11551,
+      "max_dd": -0.20109,
+      "calmar": 0.5744,
+      "sharpe": 0.6682,
+      "cvar5": -0.02224,
+      "ulcer": 0.06606,
+      "zeit_im_markt": 0.9463,
+      "trades": 43,
+      "stress": {}
+    },
+    "S-B-0.40": {
+      "start": "2022-03-18",
+      "ende": "2026-09-25",
+      "tage": 1135,
+      "cagr": 0.14113,
+      "max_dd": -0.22769,
+      "calmar": 0.6198,
+      "sharpe": 0.7513,
+      "cvar5": -0.02423,
+      "ulcer": 0.0687,
+      "zeit_im_markt": 0.9938,
+      "trades": 7,
+      "stress": {}
+    },
+    "O-A-0.95": {
+      "start": "2022-03-18",
+      "ende": "2026-09-25",
+      "tage": 1135,
+      "cagr": 0.11193,
+      "max_dd": -0.17095,
+      "calmar": 0.6548,
+      "sharpe": 0.6754,
+      "cvar5": -0.02064,
+      "ulcer": 0.05665,
+      "zeit_im_markt": 0.9436,
+      "trades": 75,
+      "stress": {}
+    },
+    "O-B-0.40": {
+      "start": "2022-03-18",
+      "ende": "2026-09-25",
+      "tage": 1135,
+      "cagr": 0.12173,
+      "max_dd": -0.19921,
+      "calmar": 0.6111,
+      "sharpe": 0.721,
+      "cvar5": -0.02115,
+      "ulcer": 0.05952,
+      "zeit_im_markt": 0.9683,
+      "trades": 60,
+      "stress": {}
+    }
+  },
+  "entwicklung": {
+    "versuche": {
+      "S-A-0.80": {
+        "start": "2007-01-03",
+        "ende": "2016-12-30",
+        "tage": 2518,
+        "cagr": 0.0106,
+        "max_dd": -0.43451,
+        "calmar": 0.0244,
+        "sharpe": 0.0011,
+        "cvar5": -0.02248,
+        "ulcer": 0.15624,
+        "zeit_im_markt": 0.7641,
+        "trades": 193,
+        "stress": {
+          "Finanzkrise 2008": -0.22239,
+          "Flash Crash / Euro 2010": -0.08127,
+          "US-Downgrade 2011": -0.02945,
+          "China / August 2015": -0.05201
+        }
+      },
+      "O-A-0.80": {
+        "start": "2009-09-18",
+        "ende": "2016-12-30",
+        "tage": 1835,
+        "cagr": 0.01625,
+        "max_dd": -0.30186,
+        "calmar": 0.0538,
+        "sharpe": 0.0208,
+        "cvar5": -0.01788,
+        "ulcer": 0.12066,
+        "zeit_im_markt": 0.7967,
+        "trades": 151,
+        "stress": {
+          "Finanzkrise 2008": null,
+          "Flash Crash / Euro 2010": -0.08127,
+          "US-Downgrade 2011": -0.02945,
+          "China / August 2015": -0.06976
+        }
+      },
+      "S-A-0.85": {
+        "start": "2007-01-03",
+        "ende": "2016-12-30",
+        "tage": 2518,
+        "cagr": 0.00801,
+        "max_dd": -0.43611,
+        "calmar": 0.0184,
+        "sharpe": -0.0086,
+        "cvar5": -0.02392,
+        "ulcer": 0.14068,
+        "zeit_im_markt": 0.8094,
+        "trades": 179,
+        "stress": {
+          "Finanzkrise 2008": -0.25893,
+          "Flash Crash / Euro 2010": -0.09733,
+          "US-Downgrade 2011": -0.09785,
+          "China / August 2015": -0.05087
+        }
+      },
+      "O-A-0.85": {
+        "start": "2009-09-18",
+        "ende": "2016-12-30",
+        "tage": 1835,
+        "cagr": 0.02612,
+        "max_dd": -0.25744,
+        "calmar": 0.1015,
+        "sharpe": 0.108,
+        "cvar5": -0.01836,
+        "ulcer": 0.10116,
+        "zeit_im_markt": 0.8316,
+        "trades": 146,
+        "stress": {
+          "Finanzkrise 2008": null,
+          "Flash Crash / Euro 2010": -0.09733,
+          "US-Downgrade 2011": -0.02945,
+          "China / August 2015": -0.07073
+        }
+      },
+      "S-A-0.90": {
+        "start": "2007-01-03",
+        "ende": "2016-12-30",
+        "tage": 2518,
+        "cagr": 0.01507,
+        "max_dd": -0.48457,
+        "calmar": 0.0311,
+        "sharpe": 0.0451,
+        "cvar5": -0.02509,
+        "ulcer": 0.15201,
+        "zeit_im_markt": 0.8606,
+        "trades": 161,
+        "stress": {
+          "Finanzkrise 2008": -0.31967,
+          "Flash Crash / Euro 2010": -0.12021,
+          "US-Downgrade 2011": -0.16457,
+          "China / August 2015": -0.06954
+        }
+      },
+      "O-A-0.90": {
+        "start": "2009-09-18",
+        "ende": "2016-12-30",
+        "tage": 1835,
+        "cagr": 0.03684,
+        "max_dd": -0.22295,
+        "calmar": 0.1652,
+        "sharpe": 0.1936,
+        "cvar5": -0.0193,
+        "ulcer": 0.08653,
+        "zeit_im_markt": 0.8703,
+        "trades": 150,
+        "stress": {
+          "Finanzkrise 2008": null,
+          "Flash Crash / Euro 2010": -0.11499,
+          "US-Downgrade 2011": -0.10078,
+          "China / August 2015": -0.08901
+        }
+      },
+      "S-A-0.95": {
+        "start": "2007-01-03",
+        "ende": "2016-12-30",
+        "tage": 2518,
+        "cagr": 0.02114,
+        "max_dd": -0.55431,
+        "calmar": 0.0381,
+        "sharpe": 0.0934,
+        "cvar5": -0.02825,
+        "ulcer": 0.19377,
+        "zeit_im_markt": 0.9202,
+        "trades": 127,
+        "stress": {
+          "Finanzkrise 2008": -0.43731,
+          "Flash Crash / Euro 2010": -0.18368,
+          "US-Downgrade 2011": -0.18435,
+          "China / August 2015": -0.09695
+        }
+      },
+      "O-A-0.95": {
+        "start": "2009-09-18",
+        "ende": "2016-12-30",
+        "tage": 1835,
+        "cagr": 0.06917,
+        "max_dd": -0.19497,
+        "calmar": 0.3548,
+        "sharpe": 0.4312,
+        "cvar5": -0.01967,
+        "ulcer": 0.06091,
+        "zeit_im_markt": 0.9139,
+        "trades": 136,
+        "stress": {
+          "Finanzkrise 2008": null,
+          "Flash Crash / Euro 2010": -0.13205,
+          "US-Downgrade 2011": -0.12331,
+          "China / August 2015": -0.12791
+        }
+      },
+      "S-B-0.10": {
+        "start": "2007-01-03",
+        "ende": "2016-12-30",
+        "tage": 2518,
+        "cagr": -0.01045,
+        "max_dd": -0.50965,
+        "calmar": -0.0205,
+        "sharpe": -0.0661,
+        "cvar5": -0.03075,
+        "ulcer": 0.27521,
+        "zeit_im_markt": 0.695,
+        "trades": 255,
+        "stress": {
+          "Finanzkrise 2008": -0.3819,
+          "Flash Crash / Euro 2010": -0.11878,
+          "US-Downgrade 2011": -0.15803,
+          "China / August 2015": -0.082
+        }
+      },
+      "O-B-0.10": {
+        "start": "2009-09-18",
+        "ende": "2016-12-30",
+        "tage": 1835,
+        "cagr": 0.0011,
+        "max_dd": -0.23434,
+        "calmar": 0.0047,
+        "sharpe": -0.1149,
+        "cvar5": -0.0188,
+        "ulcer": 0.125,
+        "zeit_im_markt": 0.6169,
+        "trades": 259,
+        "stress": {
+          "Finanzkrise 2008": null,
+          "Flash Crash / Euro 2010": -0.15188,
+          "US-Downgrade 2011": -0.17733,
+          "China / August 2015": -0.10437
+        }
+      },
+      "S-B-0.20": {
+        "start": "2007-01-03",
+        "ende": "2016-12-30",
+        "tage": 2518,
+        "cagr": -0.0041,
+        "max_dd": -0.56921,
+        "calmar": -0.0072,
+        "sharpe": -0.0192,
+        "cvar5": -0.03219,
+        "ulcer": 0.30539,
+        "zeit_im_markt": 0.8503,
+        "trades": 157,
+        "stress": {
+          "Finanzkrise 2008": -0.4744,
+          "Flash Crash / Euro 2010": -0.13881,
+          "US-Downgrade 2011": -0.17818,
+          "China / August 2015": -0.082
+        }
+      },
+      "O-B-0.20": {
+        "start": "2009-09-18",
+        "ende": "2016-12-30",
+        "tage": 1835,
+        "cagr": 0.01981,
+        "max_dd": -0.22861,
+        "calmar": 0.0867,
+        "sharpe": 0.058,
+        "cvar5": -0.01946,
+        "ulcer": 0.07847,
+        "zeit_im_markt": 0.7749,
+        "trades": 213,
+        "stress": {
+          "Finanzkrise 2008": null,
+          "Flash Crash / Euro 2010": -0.16312,
+          "US-Downgrade 2011": -0.19702,
+          "China / August 2015": -0.10437
+        }
+      },
+      "S-B-0.30": {
+        "start": "2007-01-03",
+        "ende": "2016-12-30",
+        "tage": 2518,
+        "cagr": 0.01768,
+        "max_dd": -0.56775,
+        "calmar": 0.0311,
+        "sharpe": 0.0908,
+        "cvar5": -0.03226,
+        "ulcer": 0.24927,
+        "zeit_im_markt": 0.9198,
+        "trades": 103,
+        "stress": {
+          "Finanzkrise 2008": -0.47263,
+          "Flash Crash / Euro 2010": -0.15154,
+          "US-Downgrade 2011": -0.182,
+          "China / August 2015": -0.082
+        }
+      },
+      "O-B-0.30": {
+        "start": "2009-09-18",
+        "ende": "2016-12-30",
+        "tage": 1835,
+        "cagr": 0.04227,
+        "max_dd": -0.22757,
+        "calmar": 0.1858,
+        "sharpe": 0.2315,
+        "cvar5": -0.01981,
+        "ulcer": 0.06789,
+        "zeit_im_markt": 0.8561,
+        "trades": 176,
+        "stress": {
+          "Finanzkrise 2008": null,
+          "Flash Crash / Euro 2010": -0.17644,
+          "US-Downgrade 2011": -0.20075,
+          "China / August 2015": -0.10437
+        }
+      },
+      "S-B-0.40": {
+        "start": "2007-01-03",
+        "ende": "2016-12-30",
+        "tage": 2518,
+        "cagr": 0.03718,
+        "max_dd": -0.56775,
+        "calmar": 0.0655,
+        "sharpe": 0.1834,
+        "cvar5": -0.03236,
+        "ulcer": 0.21603,
+        "zeit_im_markt": 0.967,
+        "trades": 55,
+        "stress": {
+          "Finanzkrise 2008": -0.47263,
+          "Flash Crash / Euro 2010": -0.15396,
+          "US-Downgrade 2011": -0.182,
+          "China / August 2015": -0.082
+        }
+      },
+      "O-B-0.40": {
+        "start": "2009-09-18",
+        "ende": "2016-12-30",
+        "tage": 1835,
+        "cagr": 0.06043,
+        "max_dd": -0.21542,
+        "calmar": 0.2805,
+        "sharpe": 0.36,
+        "cvar5": -0.02019,
+        "ulcer": 0.06198,
+        "zeit_im_markt": 0.9155,
+        "trades": 146,
+        "stress": {
+          "Finanzkrise 2008": null,
+          "Flash Crash / Euro 2010": -0.17921,
+          "US-Downgrade 2011": -0.20075,
+          "China / August 2015": -0.10437
+        }
+      }
+    },
+    "referenz": {
+      "baseline_O": {
+        "start": "2009-09-18",
+        "ende": "2016-12-30",
+        "tage": 1835,
+        "cagr": 0.07267,
+        "max_dd": -0.21542,
+        "calmar": 0.3373,
+        "sharpe": 0.4412,
+        "cvar5": -0.02056,
+        "ulcer": 0.06404,
+        "zeit_im_markt": 0.9559,
+        "trades": 103,
+        "stress": {
+          "Finanzkrise 2008": null,
+          "Flash Crash / Euro 2010": -0.17921,
+          "US-Downgrade 2011": -0.20075,
+          "China / August 2015": -0.10437
+        }
+      },
+      "buy_hold_S": {
+        "start": "2007-01-03",
+        "ende": "2016-12-30",
+        "tage": 2518,
+        "cagr": 0.04682,
+        "max_dd": -0.56775,
+        "calmar": 0.0825,
+        "sharpe": 0.2279,
+        "cvar5": -0.03262,
+        "ulcer": 0.18942,
+        "zeit_im_markt": 1.0,
+        "trades": 1,
+        "stress": {
+          "Finanzkrise 2008": -0.47263,
+          "Flash Crash / Euro 2010": -0.15396,
+          "US-Downgrade 2011": -0.182,
+          "China / August 2015": -0.082
+        }
+      }
+    }
+  },
+  "bestaetigung": {
+    "versuche": {
+      "S-A-0.80": {
+        "start": "2017-01-03",
+        "ende": "2026-09-25",
+        "tage": 2446,
+        "cagr": 0.1002,
+        "max_dd": -0.22384,
+        "calmar": 0.4476,
+        "sharpe": 0.7047,
+        "cvar5": -0.01868,
+        "ulcer": 0.06857,
+        "zeit_im_markt": 0.8115,
+        "trades": 145,
+        "stress": {
+          "Volmageddon 2018": -0.02766,
+          "2018 Q4": -0.07405,
+          "Covid 2020": -0.04334,
+          "Bärenmarkt 2022": -0.14726,
+          "Yen-Carry 2024": -0.07948
+        }
+      },
+      "O-A-0.80": {
+        "start": "2017-01-03",
+        "ende": "2026-09-25",
+        "tage": 2446,
+        "cagr": 0.09147,
+        "max_dd": -0.21103,
+        "calmar": 0.4335,
+        "sharpe": 0.6756,
+        "cvar5": -0.01741,
+        "ulcer": 0.0692,
+        "zeit_im_markt": 0.8078,
+        "trades": 192,
+        "stress": {
+          "Volmageddon 2018": -0.02766,
+          "2018 Q4": -0.069,
+          "Covid 2020": -0.04334,
+          "Bärenmarkt 2022": -0.15405,
+          "Yen-Carry 2024": -0.07948
+        }
+      },
+      "S-A-0.85": {
+        "start": "2017-01-03",
+        "ende": "2026-09-25",
+        "tage": 2446,
+        "cagr": 0.13417,
+        "max_dd": -0.1971,
+        "calmar": 0.6807,
+        "sharpe": 0.9092,
+        "cvar5": -0.01966,
+        "ulcer": 0.05599,
+        "zeit_im_markt": 0.8467,
+        "trades": 115,
+        "stress": {
+          "Volmageddon 2018": -0.02766,
+          "2018 Q4": -0.12929,
+          "Covid 2020": -0.04334,
+          "Bärenmarkt 2022": -0.13648,
+          "Yen-Carry 2024": -0.07948
+        }
+      },
+      "O-A-0.85": {
+        "start": "2017-01-03",
+        "ende": "2026-09-25",
+        "tage": 2446,
+        "cagr": 0.11553,
+        "max_dd": -0.19081,
+        "calmar": 0.6055,
+        "sharpe": 0.8344,
+        "cvar5": -0.01828,
+        "ulcer": 0.05564,
+        "zeit_im_markt": 0.8418,
+        "trades": 174,
+        "stress": {
+          "Volmageddon 2018": -0.02766,
+          "2018 Q4": -0.09665,
+          "Covid 2020": -0.04334,
+          "Bärenmarkt 2022": -0.15067,
+          "Yen-Carry 2024": -0.07948
+        }
+      },
+      "S-A-0.90": {
+        "start": "2017-01-03",
+        "ende": "2026-09-25",
+        "tage": 2446,
+        "cagr": 0.1209,
+        "max_dd": -0.20298,
+        "calmar": 0.5956,
+        "sharpe": 0.7741,
+        "cvar5": -0.02105,
+        "ulcer": 0.06596,
+        "zeit_im_markt": 0.8868,
+        "trades": 105,
+        "stress": {
+          "Volmageddon 2018": -0.06751,
+          "2018 Q4": -0.15303,
+          "Covid 2020": -0.04334,
+          "Bärenmarkt 2022": -0.17192,
+          "Yen-Carry 2024": -0.07948
+        }
+      },
+      "O-A-0.90": {
+        "start": "2017-01-03",
+        "ende": "2026-09-25",
+        "tage": 2446,
+        "cagr": 0.09182,
+        "max_dd": -0.20963,
+        "calmar": 0.438,
+        "sharpe": 0.6207,
+        "cvar5": -0.01948,
+        "ulcer": 0.08225,
+        "zeit_im_markt": 0.8757,
+        "trades": 179,
+        "stress": {
+          "Volmageddon 2018": -0.06751,
+          "2018 Q4": -0.12128,
+          "Covid 2020": -0.04334,
+          "Bärenmarkt 2022": -0.20203,
+          "Yen-Carry 2024": -0.07948
+        }
+      },
+      "S-A-0.95": {
+        "start": "2017-01-03",
+        "ende": "2026-09-25",
+        "tage": 2446,
+        "cagr": 0.13072,
+        "max_dd": -0.24273,
+        "calmar": 0.5385,
+        "sharpe": 0.7882,
+        "cvar5": -0.02248,
+        "ulcer": 0.0735,
+        "zeit_im_markt": 0.9313,
+        "trades": 101,
+        "stress": {
+          "Volmageddon 2018": -0.06751,
+          "2018 Q4": -0.18612,
+          "Covid 2020": -0.04334,
+          "Bärenmarkt 2022": -0.2379,
+          "Yen-Carry 2024": -0.07948
+        }
+      },
+      "O-A-0.95": {
+        "start": "2017-01-03",
+        "ende": "2026-09-25",
+        "tage": 2446,
+        "cagr": 0.09978,
+        "max_dd": -0.22835,
+        "calmar": 0.4369,
+        "sharpe": 0.6529,
+        "cvar5": -0.02033,
+        "ulcer": 0.08023,
+        "zeit_im_markt": 0.915,
+        "trades": 193,
+        "stress": {
+          "Volmageddon 2018": -0.06751,
+          "2018 Q4": -0.16071,
+          "Covid 2020": -0.04334,
+          "Bärenmarkt 2022": -0.20802,
+          "Yen-Carry 2024": -0.07948
+        }
+      },
+      "S-B-0.10": {
+        "start": "2017-01-03",
+        "ende": "2026-09-25",
+        "tage": 2446,
+        "cagr": 0.10943,
+        "max_dd": -0.33925,
+        "calmar": 0.3226,
+        "sharpe": 0.5864,
+        "cvar5": -0.02591,
+        "ulcer": 0.05179,
+        "zeit_im_markt": 0.7412,
+        "trades": 182,
+        "stress": {
+          "Volmageddon 2018": -0.07738,
+          "2018 Q4": -0.17919,
+          "Covid 2020": -0.33614,
+          "Bärenmarkt 2022": -0.03975,
+          "Yen-Carry 2024": -0.07667
+        }
+      },
+      "O-B-0.10": {
+        "start": "2017-01-03",
+        "ende": "2026-09-25",
+        "tage": 2446,
+        "cagr": 0.07955,
+        "max_dd": -0.19922,
+        "calmar": 0.3993,
+        "sharpe": 0.5518,
+        "cvar5": -0.019,
+        "ulcer": 0.06287,
+        "zeit_im_markt": 0.6922,
+        "trades": 314,
+        "stress": {
+          "Volmageddon 2018": -0.06751,
+          "2018 Q4": -0.11382,
+          "Covid 2020": -0.07231,
+          "Bärenmarkt 2022": -0.07521,
+          "Yen-Carry 2024": -0.07948
+        }
+      },
+      "S-B-0.20": {
+        "start": "2017-01-03",
+        "ende": "2026-09-25",
+        "tage": 2446,
+        "cagr": 0.13421,
+        "max_dd": -0.33925,
+        "calmar": 0.3956,
+        "sharpe": 0.695,
+        "cvar5": -0.02685,
+        "ulcer": 0.0608,
+        "zeit_im_markt": 0.8577,
+        "trades": 143,
+        "stress": {
+          "Volmageddon 2018": -0.07738,
+          "2018 Q4": -0.18091,
+          "Covid 2020": -0.33614,
+          "Bärenmarkt 2022": -0.15719,
+          "Yen-Carry 2024": -0.07667
+        }
+      },
+      "O-B-0.20": {
+        "start": "2017-01-03",
+        "ende": "2026-09-25",
+        "tage": 2446,
+        "cagr": 0.10615,
+        "max_dd": -0.21328,
+        "calmar": 0.4977,
+        "sharpe": 0.7165,
+        "cvar5": -0.01983,
+        "ulcer": 0.06485,
+        "zeit_im_markt": 0.8083,
+        "trades": 289,
+        "stress": {
+          "Volmageddon 2018": -0.06751,
+          "2018 Q4": -0.11568,
+          "Covid 2020": -0.07231,
+          "Bärenmarkt 2022": -0.15557,
+          "Yen-Carry 2024": -0.07948
+        }
+      },
+      "S-B-0.30": {
+        "start": "2017-01-03",
+        "ende": "2026-09-25",
+        "tage": 2446,
+        "cagr": 0.13864,
+        "max_dd": -0.33925,
+        "calmar": 0.4087,
+        "sharpe": 0.7006,
+        "cvar5": -0.02738,
+        "ulcer": 0.06153,
+        "zeit_im_markt": 0.9497,
+        "trades": 105,
+        "stress": {
+          "Volmageddon 2018": -0.07738,
+          "2018 Q4": -0.19317,
+          "Covid 2020": -0.33614,
+          "Bärenmarkt 2022": -0.17597,
+          "Yen-Carry 2024": -0.07667
+        }
+      },
+      "O-B-0.30": {
+        "start": "2017-01-03",
+        "ende": "2026-09-25",
+        "tage": 2446,
+        "cagr": 0.10797,
+        "max_dd": -0.21328,
+        "calmar": 0.5062,
+        "sharpe": 0.6984,
+        "cvar5": -0.02057,
+        "ulcer": 0.06493,
+        "zeit_im_markt": 0.899,
+        "trades": 263,
+        "stress": {
+          "Volmageddon 2018": -0.06751,
+          "2018 Q4": -0.12891,
+          "Covid 2020": -0.07231,
+          "Bärenmarkt 2022": -0.16708,
+          "Yen-Carry 2024": -0.07948
+        }
+      },
+      "S-B-0.40": {
+        "start": "2017-01-03",
+        "ende": "2026-09-25",
+        "tage": 2446,
+        "cagr": 0.13428,
+        "max_dd": -0.33925,
+        "calmar": 0.3958,
+        "sharpe": 0.6749,
+        "cvar5": -0.02774,
+        "ulcer": 0.07065,
+        "zeit_im_markt": 0.9873,
+        "trades": 37,
+        "stress": {
+          "Volmageddon 2018": -0.07738,
+          "2018 Q4": -0.19317,
+          "Covid 2020": -0.33614,
+          "Bärenmarkt 2022": -0.2495,
+          "Yen-Carry 2024": -0.07667
+        }
+      },
+      "O-B-0.40": {
+        "start": "2017-01-03",
+        "ende": "2026-09-25",
+        "tage": 2446,
+        "cagr": 0.10373,
+        "max_dd": -0.2462,
+        "calmar": 0.4213,
+        "sharpe": 0.66,
+        "cvar5": -0.02098,
+        "ulcer": 0.07551,
+        "zeit_im_markt": 0.9366,
+        "trades": 195,
+        "stress": {
+          "Volmageddon 2018": -0.06751,
+          "2018 Q4": -0.12891,
+          "Covid 2020": -0.07231,
+          "Bärenmarkt 2022": -0.24139,
+          "Yen-Carry 2024": -0.07948
+        }
+      }
+    },
+    "referenz": {
+      "baseline_O": {
+        "start": "2017-01-03",
+        "ende": "2026-09-25",
+        "tage": 2446,
+        "cagr": 0.10567,
+        "max_dd": -0.2462,
+        "calmar": 0.4292,
+        "sharpe": 0.6692,
+        "cvar5": -0.02112,
+        "ulcer": 0.08176,
+        "zeit_im_markt": 0.9493,
+        "trades": 162,
+        "stress": {
+          "Volmageddon 2018": -0.06751,
+          "2018 Q4": -0.12891,
+          "Covid 2020": -0.07231,
+          "Bärenmarkt 2022": -0.24139,
+          "Yen-Carry 2024": -0.07948
+        }
+      },
+      "buy_hold": {
+        "start": "2017-01-03",
+        "ende": "2026-09-25",
+        "tage": 2446,
+        "cagr": 0.13533,
+        "max_dd": -0.33925,
+        "calmar": 0.3989,
+        "sharpe": 0.6775,
+        "cvar5": -0.02788,
+        "ulcer": 0.07746,
+        "zeit_im_markt": 1.0,
+        "trades": 1,
+        "stress": {
+          "Volmageddon 2018": -0.07738,
+          "2018 Q4": -0.19317,
+          "Covid 2020": -0.33614,
+          "Bärenmarkt 2022": -0.2495,
+          "Yen-Carry 2024": -0.07667
+        }
+      }
+    }
+  },
+  "kosten_sensitivitaet_best": {
+    "S-A 0Bp": {
+      "start": "2017-01-03",
+      "ende": "2026-09-25",
+      "tage": 2446,
+      "cagr": 0.13667,
+      "max_dd": -0.23355,
+      "calmar": 0.5852,
+      "sharpe": 0.8264,
+      "cvar5": -0.02234,
+      "ulcer": 0.06871
+    },
+    "S-A 10Bp": {
+      "start": "2017-01-03",
+      "ende": "2026-09-25",
+      "tage": 2446,
+      "cagr": 0.1248,
+      "max_dd": -0.25184,
+      "calmar": 0.4955,
+      "sharpe": 0.7501,
+      "cvar5": -0.02261,
+      "ulcer": 0.07889
+    },
+    "S-B 0Bp": {
+      "start": "2017-01-03",
+      "ende": "2026-09-25",
+      "tage": 2446,
+      "cagr": 0.13645,
+      "max_dd": -0.33925,
+      "calmar": 0.4022,
+      "sharpe": 0.6854,
+      "cvar5": -0.02774,
+      "ulcer": 0.07044
+    },
+    "S-B 10Bp": {
+      "start": "2017-01-03",
+      "ende": "2026-09-25",
+      "tage": 2446,
+      "cagr": 0.13212,
+      "max_dd": -0.33925,
+      "calmar": 0.3894,
+      "sharpe": 0.6643,
+      "cvar5": -0.02774,
+      "ulcer": 0.07086
+    },
+    "O-A 0Bp": {
+      "start": "2017-01-03",
+      "ende": "2026-09-25",
+      "tage": 2446,
+      "cagr": 0.10824,
+      "max_dd": -0.21659,
+      "calmar": 0.4998,
+      "sharpe": 0.7148,
+      "cvar5": -0.02018,
+      "ulcer": 0.07276
+    },
+    "O-A 10Bp": {
+      "start": "2017-01-03",
+      "ende": "2026-09-25",
+      "tage": 2446,
+      "cagr": 0.09137,
+      "max_dd": -0.23994,
+      "calmar": 0.3808,
+      "sharpe": 0.5914,
+      "cvar5": -0.02049,
+      "ulcer": 0.0882
+    },
+    "O-B 0Bp": {
+      "start": "2017-01-03",
+      "ende": "2026-09-25",
+      "tage": 2446,
+      "cagr": 0.11222,
+      "max_dd": -0.23785,
+      "calmar": 0.4718,
+      "sharpe": 0.7192,
+      "cvar5": -0.02086,
+      "ulcer": 0.07031
+    },
+    "O-B 10Bp": {
+      "start": "2017-01-03",
+      "ende": "2026-09-25",
+      "tage": 2446,
+      "cagr": 0.0953,
+      "max_dd": -0.25446,
+      "calmar": 0.3745,
+      "sharpe": 0.601,
+      "cvar5": -0.0211,
+      "ulcer": 0.08098
+    },
+    "baseline_O 0Bp": {
+      "start": "2017-01-03",
+      "ende": "2026-09-25",
+      "tage": 2446,
+      "cagr": 0.11223,
+      "max_dd": -0.23785,
+      "calmar": 0.4718,
+      "sharpe": 0.7147,
+      "cvar5": -0.021,
+      "ulcer": 0.0765
+    },
+    "baseline_O 10Bp": {
+      "start": "2017-01-03",
+      "ende": "2026-09-25",
+      "tage": 2446,
+      "cagr": 0.09915,
+      "max_dd": -0.25446,
+      "calmar": 0.3897,
+      "sharpe": 0.6238,
+      "cvar5": -0.02125,
+      "ulcer": 0.08715
+    }
+  }
+}

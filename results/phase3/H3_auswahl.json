@@ -1,0 +1,22 @@
+{
+  "praeregistrierung_sha256": "964f9f6e82bb61a91599dbf253c35c495ea7f01cffb99e3ab5c69d03e192bee9",
+  "kandidaten": {
+    "S-A": {
+      "param": 0.95,
+      "calmar_dev": 0.0381
+    },
+    "S-B": {
+      "param": 0.4,
+      "calmar_dev": 0.0655
+    },
+    "O-A": {
+      "param": 0.95,
+      "calmar_dev": 0.3548
+    },
+    "O-B": {
+      "param": 0.4,
+      "calmar_dev": 0.2805
+    }
+  },
+  "primaer": "O-A"
+}
