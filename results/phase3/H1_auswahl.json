@@ -1,0 +1,22 @@
+{
+  "praeregistrierung_sha256": "63627e1f436248ed6e4c0c151befa040481cb67466ad3b8a4a0a032c6a602531",
+  "kandidaten": {
+    "S-6M": {
+      "t": 1.1,
+      "calmar_dev": 0.2178
+    },
+    "S-1Y": {
+      "t": 1.1,
+      "calmar_dev": 0.0894
+    },
+    "O-6M": {
+      "t": 1.05,
+      "calmar_dev": 0.3862
+    },
+    "O-1Y": {
+      "t": 1.1,
+      "calmar_dev": 0.3825
+    }
+  },
+  "primaer": "O-6M"
+}
