@@ -30,3 +30,6 @@ src/external/market_regime_detection/
 src/external/market_regime_detection/
 __pycache__/
 *.pyc
+
+# Phase 1: erzeugte Ausgaben (reproduzierbar aus data/raw/ via run_phase1.py)
+data/processed/
