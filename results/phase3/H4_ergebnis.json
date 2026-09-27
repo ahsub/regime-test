@@ -1,0 +1,575 @@
+{
+  "praeregistrierung_sha256": "d6db37c8194187a14a56fa8575e1900390dd63a4a37d1421476475611b19925b",
+  "auswahl": {
+    "praeregistrierung_sha256": "d6db37c8194187a14a56fa8575e1900390dd63a4a37d1421476475611b19925b",
+    "eligibility_tage": {
+      "A-0.05": 546,
+      "A-0.10": 129,
+      "A-0.15": 10
+    },
+    "zugelassen": [
+      "0.05",
+      "0.10"
+    ],
+    "a_gewaehlt": 0.05,
+    "primaer": "A-0.05",
+    "status_A": "auswertbar",
+    "sekundaer": [
+      "K",
+      "Z"
+    ]
+  },
+  "entscheidung_H4": "nicht bestätigt",
+  "primaer": {
+    "A-0.05": {
+      "dd_verbesserung": 0.08314,
+      "calmar": 0.1473,
+      "calmar_ref": 0.4292,
+      "stress_nicht_schlechter": 5,
+      "erfuellt": false
+    }
+  },
+  "sekundaer": {
+    "K": {
+      "dd_verbesserung": 0.0,
+      "calmar": 0.1933,
+      "calmar_ref": 0.4292,
+      "stress_nicht_schlechter": 5,
+      "erfuellt": false
+    },
+    "Z": {
+      "dd_verbesserung": 0.04441,
+      "calmar": 0.3585,
+      "calmar_ref": 0.4292,
+      "stress_nicht_schlechter": 5,
+      "erfuellt": false
+    }
+  },
+  "sekundaer_erfuellt": "0 von 2",
+  "alle_urteile_bestaetigung": {
+    "A-0.05": {
+      "dd_verbesserung": 0.08314,
+      "calmar": 0.1473,
+      "calmar_ref": 0.4292,
+      "stress_nicht_schlechter": 5,
+      "erfuellt": false
+    },
+    "A-0.10": {
+      "dd_verbesserung": 0.02819,
+      "calmar": 0.2117,
+      "calmar_ref": 0.4292,
+      "stress_nicht_schlechter": 5,
+      "erfuellt": false
+    },
+    "A-0.15": {
+      "dd_verbesserung": 0.04786,
+      "calmar": 0.3645,
+      "calmar_ref": 0.4292,
+      "stress_nicht_schlechter": 5,
+      "erfuellt": false
+    },
+    "K": {
+      "dd_verbesserung": 0.0,
+      "calmar": 0.1933,
+      "calmar_ref": 0.4292,
+      "stress_nicht_schlechter": 5,
+      "erfuellt": false
+    },
+    "Z": {
+      "dd_verbesserung": 0.04441,
+      "calmar": 0.3585,
+      "calmar_ref": 0.4292,
+      "stress_nicht_schlechter": 5,
+      "erfuellt": false
+    }
+  },
+  "informationsmehrwert": {
+    "feststellung_primaer": "eigenständige Entscheidungen in nennenswertem Umfang",
+    "je_signal": {
+      "A-0.05": {
+        "dev": {
+          "risiko_aus_tage": 546,
+          "M": 0.9432,
+          "ueberlappung": 0.0568
+        },
+        "conf": {
+          "risiko_aus_tage": 1565,
+          "M": 0.9431,
+          "ueberlappung": 0.0569
+        }
+      },
+      "A-0.10": {
+        "dev": {
+          "risiko_aus_tage": 129,
+          "M": 1.0,
+          "ueberlappung": 0.0
+        },
+        "conf": {
+          "risiko_aus_tage": 965,
+          "M": 0.9617,
+          "ueberlappung": 0.0383
+        }
+      },
+      "A-0.15": {
+        "dev": {
+          "risiko_aus_tage": 10,
+          "M": 1.0,
+          "ueberlappung": 0.0
+        },
+        "conf": {
+          "risiko_aus_tage": 676,
+          "M": 0.9497,
+          "ueberlappung": 0.0503
+        }
+      },
+      "K": {
+        "dev": {
+          "risiko_aus_tage": 0,
+          "M": null,
+          "ueberlappung": null
+        },
+        "conf": {
+          "risiko_aus_tage": 742,
+          "M": 0.9609,
+          "ueberlappung": 0.0391
+        }
+      },
+      "Z": {
+        "dev": {
+          "risiko_aus_tage": 0,
+          "M": null,
+          "ueberlappung": null
+        },
+        "conf": {
+          "risiko_aus_tage": 546,
+          "M": 0.9945,
+          "ueberlappung": 0.0055
+        }
+      }
+    }
+  },
+  "risiko_aus_phasen": {
+    "A-0.05": {
+      "dev": {
+        "risiko_aus_tage": 546,
+        "phasen": 19,
+        "mittlere_dauer": 28.7
+      },
+      "conf": {
+        "risiko_aus_tage": 1565,
+        "phasen": 17,
+        "mittlere_dauer": 92.1
+      }
+    },
+    "A-0.10": {
+      "dev": {
+        "risiko_aus_tage": 129,
+        "phasen": 7,
+        "mittlere_dauer": 18.4
+      },
+      "conf": {
+        "risiko_aus_tage": 965,
+        "phasen": 19,
+        "mittlere_dauer": 50.8
+      }
+    },
+    "A-0.15": {
+      "dev": {
+        "risiko_aus_tage": 10,
+        "phasen": 2,
+        "mittlere_dauer": 5.0
+      },
+      "conf": {
+        "risiko_aus_tage": 676,
+        "phasen": 10,
+        "mittlere_dauer": 67.6
+      }
+    },
+    "K": {
+      "dev": {
+        "risiko_aus_tage": 0,
+        "phasen": 0,
+        "mittlere_dauer": 0
+      },
+      "conf": {
+        "risiko_aus_tage": 742,
+        "phasen": 27,
+        "mittlere_dauer": 27.5
+      }
+    },
+    "Z": {
+      "dev": {
+        "risiko_aus_tage": 0,
+        "phasen": 0,
+        "mittlere_dauer": 0
+      },
+      "conf": {
+        "risiko_aus_tage": 546,
+        "phasen": 5,
+        "mittlere_dauer": 109.2
+      }
+    }
+  },
+  "signal_info": {
+    "claims": {
+      "signal_gueltig_ab_beobachtung": "2010-06-19",
+      "median_alter_tage": 9.0
+    },
+    "K": {
+      "median_alter_tage": 1.0
+    },
+    "Z": {
+      "median_alter_tage": 1.0
+    }
+  },
+  "drawdown_analyse": {
+    "baseline": {
+      "max_dd": -0.2462,
+      "hoch": "2022-01-03",
+      "tief": "2022-10-12",
+      "erholt": "2024-01-23"
+    },
+    "A-0.05": {
+      "max_dd": -0.16306,
+      "hoch": "2022-01-03",
+      "tief": "2026-03-31",
+      "erholt": "2026-08-04"
+    }
+  },
+  "entwicklung": {
+    "versuche": {
+      "A-0.05": {
+        "start": "2010-07-01",
+        "ende": "2016-12-30",
+        "tage": 1638,
+        "cagr": 0.09836,
+        "max_dd": -0.1154,
+        "calmar": 0.8523,
+        "sharpe": 0.791,
+        "cvar5": -0.01574,
+        "ulcer": 0.02977,
+        "zeit_im_markt": 0.6447,
+        "trades": 71,
+        "stress": {
+          "Finanzkrise 2008": null,
+          "Flash Crash / Euro 2010": null,
+          "US-Downgrade 2011": 0.0,
+          "China / August 2015": -0.10437
+        }
+      },
+      "A-0.10": {
+        "start": "2010-07-01",
+        "ende": "2016-12-30",
+        "tage": 1638,
+        "cagr": 0.07973,
+        "max_dd": -0.21454,
+        "calmar": 0.3716,
+        "sharpe": 0.5116,
+        "cvar5": -0.01946,
+        "ulcer": 0.0551,
+        "zeit_im_markt": 0.8803,
+        "trades": 94,
+        "stress": {
+          "Finanzkrise 2008": null,
+          "Flash Crash / Euro 2010": null,
+          "US-Downgrade 2011": -0.20075,
+          "China / August 2015": -0.10437
+        }
+      },
+      "A-0.15": {
+        "start": "2010-07-01",
+        "ende": "2016-12-30",
+        "tage": 1638,
+        "cagr": 0.09777,
+        "max_dd": -0.21542,
+        "calmar": 0.4539,
+        "sharpe": 0.6278,
+        "cvar5": -0.01964,
+        "ulcer": 0.05397,
+        "zeit_im_markt": 0.953,
+        "trades": 84,
+        "stress": {
+          "Finanzkrise 2008": null,
+          "Flash Crash / Euro 2010": null,
+          "US-Downgrade 2011": -0.20075,
+          "China / August 2015": -0.10437
+        }
+      },
+      "K": {
+        "start": "2010-07-01",
+        "ende": "2016-12-30",
+        "tage": 1638,
+        "cagr": 0.09777,
+        "max_dd": -0.21542,
+        "calmar": 0.4539,
+        "sharpe": 0.6272,
+        "cvar5": -0.01964,
+        "ulcer": 0.05394,
+        "zeit_im_markt": 0.9591,
+        "trades": 80,
+        "stress": {
+          "Finanzkrise 2008": null,
+          "Flash Crash / Euro 2010": null,
+          "US-Downgrade 2011": -0.20075,
+          "China / August 2015": -0.10437
+        }
+      },
+      "Z": {
+        "start": "2010-07-01",
+        "ende": "2016-12-30",
+        "tage": 1638,
+        "cagr": 0.09777,
+        "max_dd": -0.21542,
+        "calmar": 0.4539,
+        "sharpe": 0.6272,
+        "cvar5": -0.01964,
+        "ulcer": 0.05394,
+        "zeit_im_markt": 0.9591,
+        "trades": 80,
+        "stress": {
+          "Finanzkrise 2008": null,
+          "Flash Crash / Euro 2010": null,
+          "US-Downgrade 2011": -0.20075,
+          "China / August 2015": -0.10437
+        }
+      }
+    },
+    "referenz": {
+      "baseline": {
+        "start": "2010-07-01",
+        "ende": "2016-12-30",
+        "tage": 1638,
+        "cagr": 0.09777,
+        "max_dd": -0.21542,
+        "calmar": 0.4539,
+        "sharpe": 0.6272,
+        "cvar5": -0.01964,
+        "ulcer": 0.05394,
+        "zeit_im_markt": 0.9591,
+        "trades": 80,
+        "stress": {
+          "Finanzkrise 2008": null,
+          "Flash Crash / Euro 2010": null,
+          "US-Downgrade 2011": -0.20075,
+          "China / August 2015": -0.10437
+        }
+      }
+    }
+  },
+  "bestaetigung": {
+    "versuche": {
+      "A-0.05": {
+        "start": "2017-01-03",
+        "ende": "2026-09-25",
+        "tage": 2446,
+        "cagr": 0.02401,
+        "max_dd": -0.16306,
+        "calmar": 0.1473,
+        "sharpe": 0.0883,
+        "cvar5": -0.01259,
+        "ulcer": 0.11048,
+        "zeit_im_markt": 0.3459,
+        "trades": 64,
+        "stress": {
+          "Volmageddon 2018": -0.06751,
+          "2018 Q4": -0.09113,
+          "Covid 2020": -0.04334,
+          "Bärenmarkt 2022": -0.12738,
+          "Yen-Carry 2024": 0.0
+        }
+      },
+      "A-0.10": {
+        "start": "2017-01-03",
+        "ende": "2026-09-25",
+        "tage": 2446,
+        "cagr": 0.04615,
+        "max_dd": -0.21801,
+        "calmar": 0.2117,
+        "sharpe": 0.3077,
+        "cvar5": -0.01712,
+        "ulcer": 0.09541,
+        "zeit_im_markt": 0.5699,
+        "trades": 98,
+        "stress": {
+          "Volmageddon 2018": -0.06751,
+          "2018 Q4": -0.11273,
+          "Covid 2020": -0.04334,
+          "Bärenmarkt 2022": -0.15146,
+          "Yen-Carry 2024": 0.0
+        }
+      },
+      "A-0.15": {
+        "start": "2017-01-03",
+        "ende": "2026-09-25",
+        "tage": 2446,
+        "cagr": 0.07229,
+        "max_dd": -0.19834,
+        "calmar": 0.3645,
+        "sharpe": 0.5273,
+        "cvar5": -0.01792,
+        "ulcer": 0.06935,
+        "zeit_im_markt": 0.6868,
+        "trades": 90,
+        "stress": {
+          "Volmageddon 2018": -0.06751,
+          "2018 Q4": -0.12891,
+          "Covid 2020": -0.04334,
+          "Bärenmarkt 2022": -0.10623,
+          "Yen-Carry 2024": 0.0
+        }
+      },
+      "K": {
+        "start": "2017-01-03",
+        "ende": "2026-09-25",
+        "tage": 2446,
+        "cagr": 0.04759,
+        "max_dd": -0.2462,
+        "calmar": 0.1933,
+        "sharpe": 0.2952,
+        "cvar5": -0.01908,
+        "ulcer": 0.1346,
+        "zeit_im_markt": 0.6578,
+        "trades": 186,
+        "stress": {
+          "Volmageddon 2018": -0.06751,
+          "2018 Q4": -0.12891,
+          "Covid 2020": -0.0262,
+          "Bärenmarkt 2022": -0.24139,
+          "Yen-Carry 2024": 0.0
+        }
+      },
+      "Z": {
+        "start": "2017-01-03",
+        "ende": "2026-09-25",
+        "tage": 2446,
+        "cagr": 0.07234,
+        "max_dd": -0.20179,
+        "calmar": 0.3585,
+        "sharpe": 0.4989,
+        "cvar5": -0.01954,
+        "ulcer": 0.09807,
+        "zeit_im_markt": 0.7273,
+        "trades": 157,
+        "stress": {
+          "Volmageddon 2018": -0.06751,
+          "2018 Q4": -0.12891,
+          "Covid 2020": -0.07231,
+          "Bärenmarkt 2022": -0.14613,
+          "Yen-Carry 2024": 0.0
+        }
+      }
+    },
+    "referenz": {
+      "baseline": {
+        "start": "2017-01-03",
+        "ende": "2026-09-25",
+        "tage": 2446,
+        "cagr": 0.10567,
+        "max_dd": -0.2462,
+        "calmar": 0.4292,
+        "sharpe": 0.6692,
+        "cvar5": -0.02112,
+        "ulcer": 0.08176,
+        "zeit_im_markt": 0.9493,
+        "trades": 162,
+        "stress": {
+          "Volmageddon 2018": -0.06751,
+          "2018 Q4": -0.12891,
+          "Covid 2020": -0.07231,
+          "Bärenmarkt 2022": -0.24139,
+          "Yen-Carry 2024": -0.07948
+        }
+      }
+    }
+  },
+  "kosten_sensitivitaet": {
+    "A-0.05 0Bp": {
+      "start": "2017-01-03",
+      "ende": "2026-09-25",
+      "tage": 2446,
+      "cagr": 0.02709,
+      "max_dd": -0.1546,
+      "calmar": 0.1752,
+      "sharpe": 0.1311,
+      "cvar5": -0.01253,
+      "ulcer": 0.10448
+    },
+    "A-0.05 10Bp": {
+      "start": "2017-01-03",
+      "ende": "2026-09-25",
+      "tage": 2446,
+      "cagr": 0.02094,
+      "max_dd": -0.17144,
+      "calmar": 0.1222,
+      "sharpe": 0.0458,
+      "cvar5": -0.01265,
+      "ulcer": 0.11659
+    },
+    "K 0Bp": {
+      "start": "2017-01-03",
+      "ende": "2026-09-25",
+      "tage": 2446,
+      "cagr": 0.05526,
+      "max_dd": -0.23785,
+      "calmar": 0.2323,
+      "sharpe": 0.3617,
+      "cvar5": -0.01897,
+      "ulcer": 0.12392
+    },
+    "K 10Bp": {
+      "start": "2017-01-03",
+      "ende": "2026-09-25",
+      "tage": 2446,
+      "cagr": 0.03998,
+      "max_dd": -0.25918,
+      "calmar": 0.1543,
+      "sharpe": 0.229,
+      "cvar5": -0.01919,
+      "ulcer": 0.14549
+    },
+    "Z 0Bp": {
+      "start": "2017-01-03",
+      "ende": "2026-09-25",
+      "tage": 2446,
+      "cagr": 0.07875,
+      "max_dd": -0.18897,
+      "calmar": 0.4167,
+      "sharpe": 0.5531,
+      "cvar5": -0.0194,
+      "ulcer": 0.09107
+    },
+    "Z 10Bp": {
+      "start": "2017-01-03",
+      "ende": "2026-09-25",
+      "tage": 2446,
+      "cagr": 0.06596,
+      "max_dd": -0.2169,
+      "calmar": 0.3041,
+      "sharpe": 0.445,
+      "cvar5": -0.01969,
+      "ulcer": 0.10521
+    },
+    "baseline 0Bp": {
+      "start": "2017-01-03",
+      "ende": "2026-09-25",
+      "tage": 2446,
+      "cagr": 0.11223,
+      "max_dd": -0.23785,
+      "calmar": 0.4718,
+      "sharpe": 0.7147,
+      "cvar5": -0.021,
+      "ulcer": 0.0765
+    },
+    "baseline 10Bp": {
+      "start": "2017-01-03",
+      "ende": "2026-09-25",
+      "tage": 2446,
+      "cagr": 0.09915,
+      "max_dd": -0.25446,
+      "calmar": 0.3897,
+      "sharpe": 0.6238,
+      "cvar5": -0.02125,
+      "ulcer": 0.08715
+    }
+  }
+}

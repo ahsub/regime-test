@@ -1,0 +1,19 @@
+{
+  "praeregistrierung_sha256": "d6db37c8194187a14a56fa8575e1900390dd63a4a37d1421476475611b19925b",
+  "eligibility_tage": {
+    "A-0.05": 546,
+    "A-0.10": 129,
+    "A-0.15": 10
+  },
+  "zugelassen": [
+    "0.05",
+    "0.10"
+  ],
+  "a_gewaehlt": 0.05,
+  "primaer": "A-0.05",
+  "status_A": "auswertbar",
+  "sekundaer": [
+    "K",
+    "Z"
+  ]
+}
