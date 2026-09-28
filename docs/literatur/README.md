@@ -6,8 +6,9 @@ Paraphrasierende Reviews mit Bezug zu `regime-test` und UIQ. Keine Buchtexte im 
 |---|---|---|
 | 28.09.2026 | [Alexander, *Market Models* (2001)](LITERATUR-REVIEW-ALEXANDER-MARKET-MODELS-2026-09-28.md) | Fensterartefakte gleichgewichteter Schätzer; Prognosebewertung hängt an Verlustfunktion und Zeitraum; Derman-Regime (Kurs-Vol-Kopplung); PCA der Vol-Laufzeitstruktur; Befund D13 (DCE-„EVT-VaR“) |
 | 28.09.2026 | [Alexander, *Market Risk Analysis* I+II (2008)](LITERATUR-REVIEW-ALEXANDER-MARKET-RISK-ANALYSIS-I-II-2026-09-28.md) | Markov-Switching (Schätzung, Regime-Anzahl nur mit simulierten kritischen Werten); Quantilregression für Kurs-Vol-Randabhängigkeit; II.8 Prognose-/Backtest-Methodik (Mincer-Zarnowitz, Diebold-Mariano, Christoffersen); Einheitswurzel-Grenzfälle bei Vol-Indizes; Sharpe-Korrektur bei Autokorrelation |
+| 28.09.2026 | [Alexander, *Market Risk Analysis* III+IV (2008)](LITERATUR-REVIEW-ALEXANDER-MARKET-RISK-ANALYSIS-III-IV-2026-09-28.md) | Derman-Regime operational (Korrelation ATM-Vol ↔ Basiswert ≈ 0 / negativ / stark negativ); Laufzeitstruktur von Vol-Indizes als Regimeanzeiger; Varianz-Risikoprämie mit Crash-Asymmetrie; gefilterte historische Simulation und Präzision extremer Quantile (Lösungsweg D13); Stresstests ohne Wahrscheinlichkeit |
 
-## Offene Konsequenzen (K1–K12, Stand 28.09.2026)
+## Offene Konsequenzen (K1–K18, Stand 28.09.2026)
 
 | # | Inhalt | Status |
 |---|---|---|
@@ -21,3 +22,9 @@ Paraphrasierende Reviews mit Bezug zu `regime-test` und UIQ. Keine Buchtexte im 
 | K10 | Regime-Anzahl nicht nur per AIC/BIC; mehrere Startwerte | offen, künftige HMM-Vergleiche |
 | K11 | Öffentlicher VaR nur mit Christoffersen-Test | offen, UIQ Batch 1b / ADR-1 |
 | K12 | Sharpe-Autokorrelationskorrektur für SUITE №70(b) | offen |
+| K13 | Fix-Weg D13: gefilterte historische Simulation (mehrjährig, EWMA/GARCH-bereinigt) + Expected Tail Loss, oder ehrliche Umbenennung | mit UIQ Batch 1b entscheiden |
+| K14 | H7 operational nach Derman: Korrelation VIX-Änderung ↔ SPX-Rendite, Klassen ≈ 0 / negativ / stark negativ, Schwellen out-of-sample | Kandidat, nach Phase 4 |
+| K15 | H8 um Kurvenform (steigend / flach / invertiert) ergänzen | Kandidat, nach Phase 4 |
+| K16 | UIQ-Optionstexte: Prämienaussagen stets mit asymmetrischem Verlustprofil | offen, UIQ Batch 3 |
+| K17 | Backtests: Spot-VIX nie als handelbar werten | offen, Phase-4-Präregistrierung |
+| K18 | Szenario-/Event-Aussagen nur hypothetisch, ohne Wahrscheinlichkeit/Obergrenze | bei Wiederaufnahme Event & Surprise Gate |
