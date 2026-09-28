@@ -16,8 +16,21 @@ Regeln (Roadmap Phase 1):
   * PCR-Strukturbrüche laut Cboe-Dateikopf: bis 31.05.2012 cleared volume
     (OCC), danach preliminary volume; ab 11.06.2012 Equity/Index ohne ETPs.
     Spalte `pcr_segment` kennzeichnet die Abschnitte.
+  * PCR-Fortschreibung ab 07.10.2019 aus der Cboe-Seite „Daily Market
+    Statistics“ (Snapshot data/raw/cboe/<datum>_pcr_daily/, erzeugt mit
+    scripts/fetch_cboe_pcr_daily.py). Gleiche Abgrenzung wie Segment C
+    (Equity ohne ETPs, nur Cboe-Börse). Spalten `pcr_<x>_daily` bleiben
+    getrennt; zusätzlich `pcr_<x>_full` = CSV-Wert, wo vorhanden, sonst
+    Daily-Wert (kein Überlapp: CSV endet 04.10.2019). Die Nahtstelle wird im
+    QC-Bericht ausgewiesen.
 
-Version: 1.1.0 (27.09.2026) – NYSE-Kalender statt VIX-Datumsliste
+Version: 1.2.0 (28.09.2026)
+Changelog:
+  1.2.0 (28.09.2026) – PCR-Daily-Dateien (*_daily.csv) eingebunden, gespleißte
+                       Spalten pcr_total/equity/index_full, Nahtstellen-Prüfung
+                       im QC-Bericht; Nicht-CSV-Beilagen im Snapshot
+                       (fetch_report.json) werden geprüft, aber nicht geparst.
+  1.1.0 (27.09.2026) – NYSE-Kalender statt VIX-Datumsliste
 """
 from __future__ import annotations
 
@@ -47,7 +60,20 @@ PCR_FILE_NAMES = {
     "equitypc.csv": "pcr_equity",
     "indexpc.csv": "pcr_index",
     "totalpcarchive.csv": "pcr_total_archive",
+    # Fortschreibung aus Cboe Daily Market Statistics (ab 07.10.2019)
+    "totalpc_daily.csv": "pcr_total_daily",
+    "equitypc_daily.csv": "pcr_equity_daily",
+    "indexpc_daily.csv": "pcr_index_daily",
+    "etppc_daily.csv": "pcr_etp_daily",
+    "vixpc_daily.csv": "pcr_vix_daily",
+    "spxpc_daily.csv": "pcr_spx_daily",
 }
+
+# Gespleißte Reihen: Basis-CSV (bis 04.10.2019) + Daily-Fortschreibung
+PCR_SPLICE = {"pcr_total": "pcr_total_daily",
+              "pcr_equity": "pcr_equity_daily",
+              "pcr_index": "pcr_index_daily"}
+SPLICE_WINDOW = 60   # Handelstage je Seite für den Nahtstellen-Vergleich
 
 # Plausibilitätsgrenzen (außerhalb → im Bericht, Werte bleiben unverändert)
 BOUNDS = {
@@ -82,6 +108,10 @@ def _load_dir(snapshot_dir: Path) -> tuple[dict[str, pd.Series], dict]:
     meta = {"snapshot": str(snapshot_dir), "files": {}}
     for name in sorted(sums):
         f = snapshot_dir / name
+        if f.suffix.lower() != ".csv":
+            # Beilage (z. B. fetch_report.json): Hash geprüft, nicht geparst
+            meta["files"][name] = {"sha256": sums[name], "kind": "beilage", "columns": []}
+            continue
         kind = detect_file_kind(f)
         if kind == "index":
             s = parse_cboe_index(f)
@@ -141,6 +171,25 @@ def build_panel(snapshot_dirs, calendar_series: str = "VIX"):
         cols[k] = s.reindex(cal)  # kein Forward-Fill
     panel = pd.DataFrame(cols, index=cal)
     panel.index.name = "date"
+    splice = {}
+    for base, daily in PCR_SPLICE.items():
+        if base not in panel or daily not in panel:
+            continue
+        both = panel[base].notna() & panel[daily].notna()
+        diff = (panel.loc[both, base] - panel.loc[both, daily]).abs()
+        for suffix in ("", "_volume"):
+            panel[f"{base}_full{suffix}"] = panel[base + suffix].combine_first(
+                panel[daily + suffix])   # CSV hat Vorrang
+            all_series[f"{base}_full{suffix}"] = panel[f"{base}_full{suffix}"].dropna()
+            source_of[f"{base}_full{suffix}"] = f"{source_of[base]} + {source_of[daily]}"
+        last_csv = panel[base].last_valid_index()
+        first_daily = panel[daily].first_valid_index()
+        splice[base] = {
+            "csv_letzter_tag": None if last_csv is None else last_csv.strftime("%Y-%m-%d"),
+            "daily_erster_tag": None if first_daily is None else first_daily.strftime("%Y-%m-%d"),
+            "ueberlappung_tage": int(both.sum()),
+            "ueberlappung_max_abweichung": None if diff.empty else round(float(diff.max()), 4),
+        }
     panel = panel[sorted(panel.columns, key=lambda c: (c.startswith("pcr"), c))]
 
     seg = pd.Series(pd.NA, index=cal, dtype="object")
@@ -158,6 +207,7 @@ def build_panel(snapshot_dirs, calendar_series: str = "VIX"):
         "off_calendar": off_calendar,
         "duplicates": duplicates,
         "raw_series": all_series,
+        "pcr_splice": splice,
     }
     return panel, info
 
@@ -240,10 +290,39 @@ def quality_report(panel: pd.DataFrame, info: dict) -> dict:
         "stress_days": stress,
         "pcr_ratio_check_mismatches": consistency,
         "pcr_segment_means": pcr_seg_means,
+        "pcr_splice": _splice_report(panel, info),
         "snapshots": [{"snapshot": m["snapshot"],
                        "files": {k: v["sha256"] for k, v in m["files"].items()}}
                       for m in info["snapshots"]],
     }
+
+
+def _splice_report(panel: pd.DataFrame, info: dict) -> dict:
+    """Nahtstelle CSV → Daily: Kennzahlen je SPLICE_WINDOW Handelstage davor/danach.
+
+    Ohne Überlappung ist nur ein statistischer Vergleich möglich; ein deutlicher
+    Niveausprung wäre ein Hinweis auf abweichende Abgrenzung (nicht automatisch
+    ein Fehler – Marktphasen ändern sich auch).
+    """
+    out = {}
+    for base, meta in info.get("pcr_splice", {}).items():
+        full = panel.get(base + "_full")
+        if full is None or meta["csv_letzter_tag"] is None or meta["daily_erster_tag"] is None:
+            out[base] = dict(meta)
+            continue
+        before = panel[base].dropna().loc[:meta["csv_letzter_tag"]].tail(SPLICE_WINDOW)
+        after = panel[PCR_SPLICE[base]].dropna().loc[
+            meta["daily_erster_tag"]:].head(SPLICE_WINDOW)
+        gap = panel.loc[meta["csv_letzter_tag"]:meta["daily_erster_tag"]].index
+        out[base] = dict(meta, **{
+            "handelstage_zwischen": int(max(len(gap) - 2, 0)),
+            "mittel_davor": round(float(before.mean()), 3),
+            "mittel_danach": round(float(after.mean()), 3),
+            "std_davor": round(float(before.std()), 3),
+            "std_danach": round(float(after.std()), 3),
+            "fenster": SPLICE_WINDOW,
+        })
+    return out
 
 
 def report_markdown(qc: dict) -> str:
@@ -286,6 +365,16 @@ def report_markdown(qc: dict) -> str:
     for k, segs in qc["pcr_segment_means"].items():
         L.append(f"- {k} Mittel je Segment: " + "; ".join(
             f"{s} {v['mittel']} (n={v['n']})" for s, v in segs.items()))
+    if qc.get("pcr_splice"):
+        L += ["", "## PCR-Nahtstelle CSV → Daily", ""]
+        for k, v in qc["pcr_splice"].items():
+            txt = (f"- {k}: CSV bis {v['csv_letzter_tag']}, Daily ab {v['daily_erster_tag']}, "
+                   f"Überlappung {v['ueberlappung_tage']} Tage")
+            if "mittel_davor" in v:
+                txt += (f", {v['handelstage_zwischen']} Handelstage dazwischen; "
+                        f"Mittel {v['fenster']} Tage davor {v['mittel_davor']} "
+                        f"(σ {v['std_davor']}) · danach {v['mittel_danach']} (σ {v['std_danach']})")
+            L.append(txt)
     L += ["", "## Snapshots", ""]
     for s in qc["snapshots"]:
         L.append(f"- `{s['snapshot']}`: {len(s['files'])} Dateien, SHA-256 geprüft")

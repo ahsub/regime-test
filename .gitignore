@@ -33,3 +33,6 @@ __pycache__/
 
 # Phase 1: erzeugte Ausgaben (reproduzierbar aus data/raw/ via run_phase1.py)
 data/processed/
+
+# Rohseiten-Cache des PCR-Daily-Fetchers (Hashes stehen im Snapshot, fetch_report.json)
+data/raw/_cache/
