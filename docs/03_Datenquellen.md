@@ -30,3 +30,9 @@ https://squeezemetrics.com/monitor/static/DIX.csv
 - Laden: `python scripts/fetch_cboe_pcr_daily.py` → Snapshot `data/raw/cboe/<datum>_pcr_daily/` (Cboe-CSV-Format + `fetch_report.json` mit SHA-256 jeder Rohseite). Rohseiten-Cache lokal in `data/raw/_cache/` (nicht im Git); `--offline` parst den Cache neu ohne Download.
 - Panel: Spalten `pcr_<x>_daily` getrennt, `pcr_total_full` / `pcr_equity_full` / `pcr_index_full` = CSV bis 04.10.2019, danach Daily. Keine Überlappung beider Quellen (Seite liefert für 04.10.2019 „No data“) – Nahtstelle wird im QC-Bericht nur statistisch ausgewiesen (Mittel/σ je 60 Handelstage).
 - Nicht verwendet: `TheSnoozer/putcallratio` (Intraday-Stände bis 15:15 CT, andere Equity-Abgrenzung; 01.04.2024 Equity 0,77 vs. Cboe final 0,65).
+- Nahtstellen-Prüfung (Erstlauf 29.09.2026, je 60 Handelstage vor/nach 04./07.10.2019):
+  PCR Mittel Total 1,025 → 0,928 · Equity 0,678 → 0,584 · Index 1,261 → 1,293;
+  Volumen-Mittel (Calls+Puts) Total 4,72 → 4,28 Mio. · Equity 1,60 → 1,69 Mio. · Index 2,04 → 1,71 Mio.
+  Equity-Volumen auf beiden Seiten gleich → **kein Hinweis auf abweichende Zählbasis**; der Equity-PCR-Rückgang
+  (knapp am Rand der seit 2012 beobachteten 60/60-Verschiebungen, min. −0,090) wird als Markteffekt gewertet
+  (Stressphase Aug./Sep. 2019 → Rally Q4 2019). Mangels Überlappung bleibt das eine statistische, keine exakte Prüfung.
