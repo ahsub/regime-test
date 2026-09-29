@@ -1,0 +1,67 @@
+{
+  "manifest_version": 1,
+  "script": "scripts/fetch_yahoo_breadth_etfs.py 1.0.0",
+  "purpose": "H12-E1 (docs/exploration/H12_E1_BREITE_VOR_REGIMEWECHSEL.md)",
+  "source": "Yahoo Finance via yfinance",
+  "yfinance_version": "1.5.2",
+  "pandas_version": "3.0.5",
+  "python_version": "3.13.1",
+  "fetched_at_utc": "2026-09-29T16:09:14+00:00",
+  "requested_start": "2007-01-01",
+  "requested_end_exclusive": "2026-09-30",
+  "auto_adjust": false,
+  "note": "Adj Close von Yahoo wird rueckwirkend angepasst (nicht point-in-time).",
+  "files": [
+    {
+      "ticker": "SPY",
+      "file": "SPY.csv",
+      "sha256": "c93d24a4adb8d2e380769c3ff586648cbd75c4b7ca56592f53b5a0ce1107c093",
+      "rows": 4966,
+      "first_date": "2007-01-03",
+      "last_date": "2026-09-29",
+      "missing_values": {
+        "Open": 0,
+        "High": 0,
+        "Low": 0,
+        "Close": 0,
+        "Adj Close": 0,
+        "Volume": 0
+      },
+      "dates_missing_vs_other_tickers": []
+    },
+    {
+      "ticker": "RSP",
+      "file": "RSP.csv",
+      "sha256": "9505683e7c0639f7c7954d5419e08e6fd52a4d1e2e85545b8a1d53b8254b8b22",
+      "rows": 4966,
+      "first_date": "2007-01-03",
+      "last_date": "2026-09-29",
+      "missing_values": {
+        "Open": 0,
+        "High": 0,
+        "Low": 0,
+        "Close": 0,
+        "Adj Close": 0,
+        "Volume": 0
+      },
+      "dates_missing_vs_other_tickers": []
+    },
+    {
+      "ticker": "IWM",
+      "file": "IWM.csv",
+      "sha256": "10d60faa1b755809af700d46ca32c554c595adb20c904142abd39df100c7fd15",
+      "rows": 4966,
+      "first_date": "2007-01-03",
+      "last_date": "2026-09-29",
+      "missing_values": {
+        "Open": 0,
+        "High": 0,
+        "Low": 0,
+        "Close": 0,
+        "Adj Close": 0,
+        "Volume": 0
+      },
+      "dates_missing_vs_other_tickers": []
+    }
+  ]
+}
