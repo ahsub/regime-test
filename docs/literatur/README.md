@@ -41,3 +41,24 @@ Bereits abgedeckt und daher **nicht** aufgenommen: VVIX/SKEW (im Panel), Zinskur
 | H11 | Hurst-Exponent (Trend vs. Mean-Reversion) auf Renditen | R/S bei 126–252 Tagen aufwärtsverzerrt → Bias-Korrektur (Anis-Lloyd) und Konfidenzband; Schätzstreuung liegt in der Größenordnung der Schwellen 0,45/0,55 |
 
 Nur Forschung, nicht UIQ Public: Vol-Targeting / volatilitätsgesteuerte Positionsgröße (Positionsgrößen sind im Public-Pfad ausgeschlossen, UIQ ADR-1).
+
+## Kandidaten aus zweitem externem Review (29.09.2026, nachmittags)
+
+Gleicher Status: nicht präregistriert, kein Code, frühestens nach Phase 4. Jeder Kandidat muss die Phase-4-H0 schlagen (inkrementeller Prognosewert **über den eingefrorenen VIX-Benchmark hinaus**); n_trials unverändert 42.
+H12 = Marktbreite-Divergenz (Forschungsnotiz in UIQ-Suite `docs/REGIME-BACKTEST-ROADMAP-2026-09-27.md`, ursprünglich als H6 notiert, umbenannt wegen Kollision mit H6 TIP-Canary).
+
+| # | Kandidat | Vorbedingung / methodischer Vorbehalt |
+|---|---|---|
+| H13 | Amihud-Illiquidität **aus Tagesdaten** (\|r\| / Dollar-Volumen, SPY) | Steigt mechanisch mit \|r\| → misst großteils realisierte Vola; Nutzen nur, wenn er über den VIX hinaus trägt. SPY-Dollarvolumen wächst über 2011–2026 um ein Vielfaches → nur trendbereinigt bzw. als rollierender z-Score. Offen, ob ETF-Volumen Marktliquidität abbildet. Review-Angabe „Korrelation Daily/Intraday-Amihud ≈ 0,42“ ohne Quelle, nicht übernommen. Intraday-Variante nur 2 Jahre (kein Stress) → nicht als Testbasis |
+| H14 | Cross-Asset-Risikoappetit: Kupfer/Gold-Verhältnis und US-Dollar-Momentum (20T-Rendite, z-Score) | **Eine** Hypothese mit vorab gewählter Einzelreihe je Achse, nicht beide Varianten frei wählen (Multiple Testing). Dollar: FRED `DTWEXBGS` (Broad Index) statt ICE-DXY prüfen (frei, lange Historie). Kupfer/Gold: Futures-Rollkontrakte bzw. ETFs – Rollartefakte und Point-in-Time-Fähigkeit klären |
+| H15 | MOVE-Index (Anleihe-Vola) als Zins-Stressachse | ICE-Lizenz; freie Historie nur über Yahoo `^MOVE`, Lückenlosigkeit und Nutzungsrecht prüfen. Abgrenzung zu H4 (Zinskurve ❌): Vola der Zinsen ≠ Niveau/Steigung |
+| H16 | NYSE-TRIN (Arms-Index), Up-/Down-Volumen | Freie, lückenlose Tageshistorie ab ≤ 2011 **nicht belegt** → erst Quelle finden, sonst streichen. Überschneidung mit H12 (Breite) vor Präregistrierung klären |
+| H17 | AAII Bull-Bear-Spread (wöchentlich) | Point-in-Time: Stempel = Veröffentlichungstag (Donnerstag), Forward-Fill nur ab dann; Bezug der Historie (Mitgliederbereich?) und Lizenz prüfen. Nur als Kontrarian-Kontext, nicht als Timing-Signal |
+
+**Geprüft und nicht aufgenommen (29.09.2026):**
+- **Gamma-Flip, Charm, Net-GEX-Nullpunkt:** keine freie Historie vor ca. 2022; frei ist nur das Net-GEX-Niveau von SqueezeMetrics (bereits genutzt). Weg nur über (a) bezahlte EOD-Ketten (ThetaData/ORATS; Umfang/Preis ungeprüft; nur interne Forschung, nicht UIQ Public) oder (b) ein **eigenes Forward-Archiv** delayed Cboe-Ketten nach Muster des UIQ-IV-Archivs (№15/№70) – Entscheidung auf UIQ-Seite, Nutzungsbedingungen der Cboe-Endpunkte vorher prüfen; Fremd-Repos (`traders-edge-mcp`, `global-stock-data`) ungeprüft, nicht als Datenquelle einbinden.
+- **0DTE-Anteil:** Historie erst ab 2022, darin genau eine schnelle Stressepisode (Aug. 2024) → als Gate bei n = 1 kalibriert; höchstens beschreibend im Snapshot.
+- **Zwei-Ebenen-Modell mit „Panik-Gate → sofort flat“:** Ausstiegsfilter auf Verdacht (Phase-3-Konsequenz); zudem strukturell wirkungslos gegen Übernacht-Gaps (Position t−1 × Rendite t; 24.08.2015, 05.08.2024).
+- **PCA über gemischte Features → HMM:** schwer interpretierbar; die sinnvolle Variante (PCA der VIX-Kurve) ist H8.
+- **Durchschnittliche realisierte Einzeltitel-Korrelation:** braucht survivorship-freie Indexzusammensetzung; implizites Gegenstück COR1M in H3 bereits ❌.
+- **Methodik-Hinweis aus dem Review, korrigiert:** Der AIC/BIC-Vergleich der Framework-Integration (README) lief auf unterschiedlichen Stichproben (3.965 vs. 3.203 Zeilen) und ist damit **nicht aussagekräftig** – in keine Richtung (vgl. K10). White's Reality Check / Hansen SPA sind für die Prognosevergleiche in Phase 4 nicht das passende Werkzeug (dort Diebold-Mariano / Giacomini-White), aber als Ergänzung zur DSR für die wirtschaftliche Prüfung (Phase 5, alle 42+ Versuche) vormerken.

@@ -60,6 +60,8 @@ Im Rahmen der Evaluierung wurde das Repository **market_regime_detection** (k3ti
 
 **Fazit:** Die Framework-Features führen zu einem **Datenverlust von 19,2%** und verschlechtern die Modellgüte signifikant. Die Integration wird **nicht empfohlen**.
 
+> **Korrektur (29.09.2026):** AIC/BIC sind nur auf identischer Stichprobe vergleichbar. Beide Modelle liefen auf unterschiedlich vielen Zeilen (3.965 vs. 3.203), der Vergleich ist daher **nicht aussagekräftig** – weder für noch gegen die Framework-Features. Die Nicht-Empfehlung bleibt aus den übrigen Gründen bestehen (Datenverlust, Phase-3-Befunde). Vgl. `docs/literatur/README.md` (K10).
+
 ---
 
 ## 🧭 Roadmap-Stand
