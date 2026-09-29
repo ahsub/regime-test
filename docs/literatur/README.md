@@ -28,3 +28,16 @@ Paraphrasierende Reviews mit Bezug zu `regime-test` und UIQ. Keine Buchtexte im 
 | K16 | UIQ-Optionstexte: Prämienaussagen stets mit asymmetrischem Verlustprofil | offen, UIQ Batch 3 |
 | K17 | Backtests: Spot-VIX nie als handelbar werten | offen, Phase-4-Präregistrierung |
 | K18 | Szenario-/Event-Aussagen nur hypothetisch, ohne Wahrscheinlichkeit/Obergrenze | bei Wiederaufnahme Event & Surprise Gate |
+
+## Weitere Kandidaten aus externem Review (29.09.2026)
+
+Nicht präregistriert, kein Code. Präregistrierung und Umsetzung erst nach Phase 4, analog H5/H6.
+Bereits abgedeckt und daher **nicht** aufgenommen: VVIX/SKEW (im Panel), Zinskurve (H4), implizite Korrelation (H3), PCR (H2); NFCI bewusst ausgeschlossen (H4: Point-in-Time erst ab 06/2011, starke Revisionen).
+
+| # | Kandidat | Vorbedingung / methodischer Vorbehalt |
+|---|---|---|
+| H9 | HY-OAS (`BAMLH0A0HYM2`) als Kredit-Achse | vorab prüfen: ALFRED-Vintages vorhanden? (BAA10Y scheiterte in H4 genau daran); ICE-Lizenz/Historienumfang auf FRED |
+| H10 | Change-Point-Detection (z. B. PELT) als Methodenalternative zum HMM | Hypothese „stabiler als HMM“, **nicht** „schneller“: PELT braucht nach einem Bruch ≥ `min_size` Beobachtungen, kurze Schocks (z. B. Aug. 2024) sind damit strukturell nicht früher erkennbar; nur rollierend ohne Look-ahead |
+| H11 | Hurst-Exponent (Trend vs. Mean-Reversion) auf Renditen | R/S bei 126–252 Tagen aufwärtsverzerrt → Bias-Korrektur (Anis-Lloyd) und Konfidenzband; Schätzstreuung liegt in der Größenordnung der Schwellen 0,45/0,55 |
+
+Nur Forschung, nicht UIQ Public: Vol-Targeting / volatilitätsgesteuerte Positionsgröße (Positionsgrößen sind im Public-Pfad ausgeschlossen, UIQ ADR-1).
