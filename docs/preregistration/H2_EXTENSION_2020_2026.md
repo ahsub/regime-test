@@ -1,7 +1,11 @@
 # Präregistrierung H2-Ext – Replikation des H2-Informationsaudits auf 10/2019 – 09/2026
 
-**Rev. 2** · 29.09.2026 · **Entwurf zur Review, vor jeder Auswertung** · Roadmap Phase 3,
+**Rev. 3** · 29.09.2026 · **vor jeder Auswertung** · Roadmap Phase 3,
 Hypothese H2 (UIQ-Suite `docs/REGIME-BACKTEST-ROADMAP-2026-09-27.md`)
+(Rev. 3 nach zeilenweiser Review von Rev. 2: Aussage 1 als „Rangassoziation mit dem VIX“
+benannt, zulässige Interpretation begrenzt (§1, §7c); Abweichungsrichtung je Aussage und
+„nicht bestimmbar“ für Teilbefunde festgelegt (§7a); Berechnung und Rundung von Δ präzisiert
+(§7). Keine Kennzahl, kein Schwellenwert, kein Zeitraum geändert. Rev. 2: Commit `fc39ce1`.)
 (Rev. 2 nach Vorprüfung durch den Reviewer: Feststellungsregeln vollständig operationalisiert
 inkl. Grenzfälle und widersprüchlicher Teilbefunde (§7, §7a); Verbot einer Gesamtbewertung
 geschärft; H2b-Baseline-Empfehlung aus §6 entfernt – gehört in eine eigene Präregistrierung.
@@ -34,8 +38,10 @@ Bleiben die zwei Kernbefunde des H2-Audits außerhalb des ursprünglichen Zeitra
 in einer Phase mit drei großen Stressereignissen (Covid 2020, Bärenmarkt 2022, Yen-Carry 2024),
 die im Originalfenster fehlten?
 
-1. **Eigenständigkeit:** Die echte Cboe-PCR enthält Information, die nicht im VIX steckt
-   (Original: ρ(Total-PCR, VIX) = 0,31).
+1. **Rangassoziation mit dem VIX:** Die echte Cboe-PCR ist mit dem VIX nur schwach monoton
+   assoziiert (Original: ρ(Total-PCR, VIX) = 0,31). Die ursprüngliche Forschungsfrage lautete
+   „enthält die PCR Information, die nicht im VIX steckt?“ – gemessen wird hier jedoch
+   ausschließlich die Rangkorrelation; zur Reichweite dieser Aussage siehe §7c.
 2. **Proxy ≠ PCR:** Der UIQ-Proxy `calc_pcr_proxy()` bildet die echte PCR nicht ab
    (Original: ρ 0,39; κ Overlay 0,08; Skalenproblem 51 % vs. 6,5 % „Gier“).
 
@@ -133,29 +139,46 @@ erfolgt auf dem gerundeten Wert.
 
 | Aussage | Kennzahl (exakte Definition) | „repliziert“ | „abgeschwächt“ | „nicht repliziert“ |
 |---|---|---|---|---|
-| 1 Eigenständigkeit ggü. VIX | `rho_total_VIX` = Spearman ρ(Total-PCR, VIX), Tageswerte | ρ < 0,500 | 0,500 ≤ ρ < 0,800 | ρ ≥ 0,800 (= Redundanzschwelle aus H3 §10) |
+| 1 Rangassoziation mit dem VIX | `rho_total_VIX` = Spearman ρ(Total-PCR, VIX), Tageswerte | ρ < 0,500 | 0,500 ≤ ρ < 0,800 | ρ ≥ 0,800 (= Redundanzschwelle aus H3 §10) |
 | 2a Proxy bildet PCR nicht ab | `zustaende_overlay.kappa` = Cohen κ der Overlay-Zustände (Gier < 0,75 · neutral · Panik > 1,10) von Proxy und Total-PCR | κ < 0,200 | 0,200 ≤ κ < 0,400 | κ ≥ 0,400 |
-| 2b Skalenproblem | Δ = Anteil „Gier“ (Overlay) Proxy − Anteil „Gier“ echte Total-PCR, in Prozentpunkten, aus `anteile_proxy`/`anteile_echt` | Δ ≥ 20,0 Pp | 10,0 ≤ Δ < 20,0 Pp | Δ < 10,0 Pp (auch negativ) |
+| 2b Skalenproblem | Δ = Anteil „Gier“ (Overlay) Proxy − Anteil „Gier“ echte Total-PCR, in Prozentpunkten (Berechnung s. u.) | Δ ≥ 20,000 Pp | 10,000 ≤ Δ < 20,000 Pp | Δ < 10,000 Pp (auch negativ) |
+
+**Berechnung von Δ:** Beide Anteile „Gier“ werden wie im Original bestimmt (Anteil der Tage mit
+Overlay-Zustand „Gier“, d. h. Wert < 0,75, an allen auswertbaren Tagen), aber **ungerundet**
+verwendet – nicht die im Original-JSON auf 4 Stellen gerundeten `anteile_*`. Δ = 100 × (Anteil
+Proxy − Anteil echt); erst dieses Δ wird auf 3 Nachkommastellen gerundet und eingestuft.
+Die gerundeten Einzelanteile werden zusätzlich berichtet.
 
 **Grenzfälle, vorab entschieden:**
 - Werte genau auf einer Schwelle fallen in die Kategorie, deren Intervall die Schwelle
   einschließt (siehe ≤ in der Tabelle).
 - ρ oder κ nicht berechenbar (NaN, z. B. nur ein Zustand besetzt) → Einstufung
   „nicht bestimmbar“; es wird **nicht** auf eine andere Kennzahl ausgewichen.
-- Negatives ρ(Total-PCR, VIX): Aussage 1 wird nach |ρ| eingestuft (Eigenständigkeit betrifft
-  die Stärke, nicht die Richtung); die Richtung wird berichtet.
+- Negatives ρ(Total-PCR, VIX): Aussage 1 wird nach |ρ| eingestuft (die Aussage betrifft die
+  Stärke der Assoziation, nicht die Richtung); die Richtung wird berichtet.
 - Weniger als 1.000 auswertbare Tage nach Ausschluss → alle drei Einstufungen „nicht
   bestimmbar“, Bericht nur deskriptiv.
 
 ## 7a. Teilbefunde, die der Einstufung widersprechen können
 
-Diese Werte werden berichtet, **ändern die Einstufung aber nicht**. Weicht ein Teilbefund in
-die jeweils ungünstigere Kategorie ab, wird er im Bericht als **„Abweichung“** markiert – nach
-denselben Schwellen wie §7:
+Diese Werte werden berichtet, **ändern die Einstufung aber nicht**. Jeder Teilbefund wird mit
+derselben Kennzahl, Rundung und denselben Schwellen wie in §7 eingestuft – bei Aussage 1
+ebenfalls nach |ρ|. Fällt er in eine **ungünstigere** Kategorie als der Hauptbefund, wird er
+im Bericht als **„Abweichung“** markiert. Ungünstiger heißt je Aussage:
+
+| Aussage | ungünstigere Richtung |
+|---|---|
+| 1 Rangassoziation mit dem VIX | höheres \|ρ\| |
+| 2a Proxy bildet PCR nicht ab | höheres κ |
+| 2b Skalenproblem | niedrigeres Δ |
+
+Ist eine Teilkennzahl nicht berechenbar (NaN, zu wenige Tage, nur ein Zustand besetzt), wird
+der Teilbefund als **„nicht bestimmbar“** berichtet – nie als „Abweichung“. Fehlende Daten
+zählen damit nicht als ungünstiger Befund.
 
 | Teilbefund | Beispiel | Behandlung |
 |---|---|---|
-| einzelne Stressphasen (§5) | Eigenständigkeit im Gesamtfenster, aber ρ(PCR, VIX) ≥ 0,500 in Covid 2020 | Einstufung bleibt; Phase als „Abweichung“ genannt. In Phasen unter 60 Tagen (Covid 24, Yen-Carry 17 Handelstage) werden ρ/κ nur berichtet, nicht markiert – zu wenige Tage |
+| einzelne Stressphasen (§5) | \|ρ\| < 0,500 im Gesamtfenster, aber \|ρ(PCR, VIX)\| ≥ 0,500 im Bärenmarkt 2022 | Einstufung bleibt; Phase als „Abweichung“ genannt. Phasen unter 60 Handelstagen (Covid 2020: 24, Yen-Carry 2024: 17) gelten für ρ/κ/Δ als „nicht bestimmbar“ (zu wenige Tage); ihre Werte werden nur berichtet |
 | Teilfenster 2019–2022 / 2023–2026 | κ < 0,200 in einem, ≥ 0,200 im anderen Teilfenster | Einstufung bleibt; Teilfenster als „Abweichung“ genannt |
 | Equity-/Index-PCR | Total repliziert, Equity nicht | Einstufung bleibt; nur berichtet |
 | Lauf mit UIQ-Defaults statt Ausschluss | andere Kategorie als der Hauptlauf | Einstufung bleibt; nur berichtet |
@@ -177,6 +200,18 @@ benannt, zusätzlich zur Einstufung – ohne diese zu ändern.
   gesondert zu besprechen.
 - n_trials (kumuliert 42) ändert sich nicht: Es werden keine Kandidaten gewählt oder Parameter
   optimiert.
+
+## 7c. Reichweite der Aussagen (zulässige Interpretation)
+
+| Aussage | zulässig | nicht zulässig |
+|---|---|---|
+| 1 | „Die geringe (bzw. mittlere/hohe) Rangassoziation zwischen Total-PCR und VIX bleibt im Erweiterungsfenster bestehen (bzw. nicht).“ | „Die PCR liefert nachweislich eigenständige Information gegenüber dem VIX.“ – dafür wäre ein bedingter Informationsgewinn oder Prognosetest nötig, der hier nicht vorgesehen ist |
+| 2a | „Die Overlay-Zustände von Proxy und echter PCR stimmen (nicht) über Zufallsniveau hinaus überein.“ | Aussagen über die Güte des Proxys als Handelssignal |
+| 2b | „Der Proxy meldet (nicht) deutlich häufiger ‚Gier‘ als die echte Total-PCR.“ | Aussagen darüber, welche Skala „richtig“ ist |
+
+Die Schwellen 0,500 / 0,800 (ρ), 0,200 / 0,400 (κ) und 10 / 20 Pp (Δ) sind **vorab definierte
+operative Klassifikationen** – keine Signifikanztests und kein Beweis für
+Informationsunabhängigkeit.
 
 ## 8. Bereits bekannte bzw. explorativ gesehene Werte aus dem neuen Zeitraum
 
