@@ -1,0 +1,734 @@
+{
+  "praeregistrierung": "docs/preregistration/H2_EXTENSION_2020_2026.md Rev. 3",
+  "ausgeschlossen_fehlende_proxy_eingaenge": {
+    "anzahl": 0,
+    "tage": [],
+    "je_reihe": {
+      "VIX": 0,
+      "VIX3M": 0,
+      "VVIX": 0
+    }
+  },
+  "audit": {
+    "fenster": [
+      "2019-10-07",
+      "2026-09-25"
+    ],
+    "tage": 1752,
+    "korrelation": {
+      "rho_total_proxy": 0.247,
+      "rho_equity_proxy": 0.097,
+      "rho_index_proxy": 0.345,
+      "rho_total_VIX": 0.21,
+      "rho_total_MA10_proxy": 0.188,
+      "rho_total_MA10_proxy_MA10": 0.224,
+      "rho_dtotal_dproxy_5T": 0.396,
+      "je_segment": {
+        "C_preliminary_ohne_ETP": 0.247
+      }
+    },
+    "verteilung": {
+      "pcr_total": {
+        "mittel": 0.908,
+        "p05": 0.71,
+        "p95": 1.15
+      },
+      "pcr_equity": {
+        "mittel": 0.596,
+        "p05": 0.41,
+        "p95": 0.834
+      },
+      "proxy": {
+        "mittel": 0.887,
+        "p05": 0.58,
+        "p95": 1.324
+      }
+    },
+    "ruhig_vs_stress": {
+      "stressphasen": {
+        "tage": 237,
+        "rho_total_proxy": 0.546
+      },
+      "uebrige": {
+        "tage": 1515,
+        "rho_total_proxy": 0.106
+      },
+      "VIX_ueber_25": {
+        "tage": 346,
+        "rho_total_proxy": 0.32
+      },
+      "VIX_bis_25": {
+        "tage": 1406,
+        "rho_total_proxy": 0.124
+      }
+    },
+    "zustaende_overlay": {
+      "uebereinstimmung": 0.4937,
+      "kappa": 0.036,
+      "kreuztabelle": {
+        "Gier": {
+          "Gier": 48,
+          "Panik": 21,
+          "neutral": 474
+        },
+        "Panik": {
+          "Gier": 6,
+          "Panik": 64,
+          "neutral": 222
+        },
+        "neutral": {
+          "Gier": 109,
+          "Panik": 55,
+          "neutral": 753
+        }
+      },
+      "anteile_echt": {
+        "neutral": 0.8271,
+        "Gier": 0.093,
+        "Panik": 0.0799
+      },
+      "anteile_proxy": {
+        "neutral": 0.5234,
+        "Gier": 0.3099,
+        "Panik": 0.1667
+      }
+    },
+    "zustaende_label": {
+      "uebereinstimmung": 0.5599,
+      "kappa": 0.105,
+      "anteile_echt": {
+        "NEUTRAL": 0.7626,
+        "ÜBERVERKAUFT": 0.1963,
+        "ÜBERKAUFT": 0.0411
+      },
+      "anteile_proxy": {
+        "NEUTRAL": 0.5925,
+        "ÜBERVERKAUFT": 0.2568,
+        "ÜBERKAUFT": 0.1507
+      }
+    },
+    "zustaende_overlay_skalenbereinigt": {
+      "schwellen_echt": [
+        0.84,
+        1.02
+      ],
+      "uebereinstimmung": 0.4652,
+      "kappa": 0.105
+    },
+    "rauschen": {
+      "autokorr_total_1T": 0.613,
+      "autokorr_total_20T": 0.292,
+      "autokorr_proxy_1T": 0.919,
+      "autokorr_proxy_20T": 0.51,
+      "autokorr_rangdifferenz_1T": 0.745,
+      "autokorr_rangdifferenz_20T": 0.633,
+      "abweichungsserien_skalenbereinigt": {
+        "anzahl": 345,
+        "median_tage": 2.0,
+        "anteil_tage_in_serien_ab_5": 0.456
+      },
+      "rangdifferenz_jahresmittel": {
+        "2019": 0.405,
+        "2020": -0.38,
+        "2021": -0.213,
+        "2022": -0.022,
+        "2023": 0.331,
+        "2024": 0.232,
+        "2025": -0.055,
+        "2026": 0.02
+      }
+    },
+    "stressphasen": {
+      "Covid 2020": {
+        "tage": 24,
+        "proxy_mittel": 1.296,
+        "total_mittel": 1.191,
+        "proxy_max": 1.4,
+        "total_max": 1.83,
+        "anteil_panik_proxy": 0.875,
+        "anteil_panik_echt": 0.708,
+        "anteil_panik_echt_skalenbereinigt": 0.792,
+        "erster_paniktag_proxy": "2020-02-24",
+        "erster_paniktag_echt_skalenbereinigt": "2020-02-21"
+      },
+      "Bärenmarkt 2022": {
+        "tage": 196,
+        "proxy_mittel": 1.081,
+        "total_mittel": 1.004,
+        "proxy_max": 1.4,
+        "total_max": 1.36,
+        "anteil_panik_proxy": 0.403,
+        "anteil_panik_echt": 0.194,
+        "anteil_panik_echt_skalenbereinigt": 0.357,
+        "erster_paniktag_proxy": "2022-01-18",
+        "erster_paniktag_echt_skalenbereinigt": "2022-01-05"
+      },
+      "Yen-Carry 2024": {
+        "tage": 17,
+        "proxy_mittel": 0.944,
+        "total_mittel": 0.976,
+        "proxy_max": 1.4,
+        "total_max": 1.28,
+        "anteil_panik_proxy": 0.235,
+        "anteil_panik_echt": 0.176,
+        "anteil_panik_echt_skalenbereinigt": 0.353,
+        "erster_paniktag_proxy": "2024-08-02",
+        "erster_paniktag_echt_skalenbereinigt": "2024-07-26"
+      }
+    }
+  },
+  "einstufung": {
+    "kennzahlen": {
+      "tage": 1752,
+      "rho_VIX": 0.21,
+      "rho_VIX_betrag": 0.21,
+      "kappa_overlay": 0.036,
+      "delta_gier_pp": 21.689,
+      "anteil_gier_proxy": 0.3099,
+      "anteil_gier_echt": 0.093
+    },
+    "aussagen": {
+      "1": "repliziert",
+      "2a": "repliziert",
+      "2b": "repliziert"
+    }
+  },
+  "stressphasen_stichprobe": {
+    "Covid 2020": {
+      "handelstage": 24,
+      "ausgeschlossen": 0,
+      "mindeststichprobe": 60
+    },
+    "Bärenmarkt 2022": {
+      "handelstage": 196,
+      "ausgeschlossen": 0,
+      "mindeststichprobe": 60
+    },
+    "Yen-Carry 2024": {
+      "handelstage": 17,
+      "ausgeschlossen": 0,
+      "mindeststichprobe": 60
+    }
+  },
+  "teilbefunde": {
+    "Stressphase Covid 2020": {
+      "kennzahlen": {
+        "tage": 24,
+        "rho_VIX": 0.371,
+        "rho_VIX_betrag": 0.371,
+        "kappa_overlay": 0.273,
+        "delta_gier_pp": 0.0,
+        "anteil_gier_proxy": 0.0,
+        "anteil_gier_echt": 0.0
+      },
+      "einstufung": {
+        "1": "nicht bestimmbar",
+        "2a": "nicht bestimmbar",
+        "2b": "nicht bestimmbar"
+      },
+      "mindeststichprobe": 60,
+      "abweichung": {
+        "1": "nicht bestimmbar",
+        "2a": "nicht bestimmbar",
+        "2b": "nicht bestimmbar"
+      }
+    },
+    "Stressphase Bärenmarkt 2022": {
+      "kennzahlen": {
+        "tage": 196,
+        "rho_VIX": 0.476,
+        "rho_VIX_betrag": 0.476,
+        "kappa_overlay": 0.257,
+        "delta_gier_pp": 1.531,
+        "anteil_gier_proxy": 0.0153,
+        "anteil_gier_echt": 0.0
+      },
+      "einstufung": {
+        "1": "repliziert",
+        "2a": "abgeschwächt",
+        "2b": "nicht repliziert"
+      },
+      "mindeststichprobe": 60,
+      "abweichung": {
+        "1": "–",
+        "2a": "Abweichung",
+        "2b": "Abweichung"
+      }
+    },
+    "Stressphase Yen-Carry 2024": {
+      "kennzahlen": {
+        "tage": 17,
+        "rho_VIX": 0.801,
+        "rho_VIX_betrag": 0.801,
+        "kappa_overlay": 0.688,
+        "delta_gier_pp": 5.882,
+        "anteil_gier_proxy": 0.0588,
+        "anteil_gier_echt": 0.0
+      },
+      "einstufung": {
+        "1": "nicht bestimmbar",
+        "2a": "nicht bestimmbar",
+        "2b": "nicht bestimmbar"
+      },
+      "mindeststichprobe": 60,
+      "abweichung": {
+        "1": "nicht bestimmbar",
+        "2a": "nicht bestimmbar",
+        "2b": "nicht bestimmbar"
+      }
+    },
+    "Teilfenster 2019–2022": {
+      "kennzahlen": {
+        "tage": 816,
+        "rho_VIX": 0.375,
+        "rho_VIX_betrag": 0.375,
+        "kappa_overlay": 0.075,
+        "delta_gier_pp": 1.961,
+        "anteil_gier_proxy": 0.1789,
+        "anteil_gier_echt": 0.1593
+      },
+      "einstufung": {
+        "1": "repliziert",
+        "2a": "repliziert",
+        "2b": "nicht repliziert"
+      },
+      "mindeststichprobe": 0,
+      "abweichung": {
+        "1": "–",
+        "2a": "–",
+        "2b": "Abweichung"
+      }
+    },
+    "Teilfenster 2023–2026": {
+      "kennzahlen": {
+        "tage": 936,
+        "rho_VIX": 0.214,
+        "rho_VIX_betrag": 0.214,
+        "kappa_overlay": 0.025,
+        "delta_gier_pp": 38.889,
+        "anteil_gier_proxy": 0.4241,
+        "anteil_gier_echt": 0.0353
+      },
+      "einstufung": {
+        "1": "repliziert",
+        "2a": "repliziert",
+        "2b": "repliziert"
+      },
+      "mindeststichprobe": 0,
+      "abweichung": {
+        "1": "–",
+        "2a": "–",
+        "2b": "–"
+      }
+    },
+    "Equity-PCR": {
+      "kennzahlen": {
+        "tage": 1752,
+        "rho_VIX": 0.071,
+        "rho_VIX_betrag": 0.071,
+        "kappa_overlay": 0.017,
+        "delta_gier_pp": -57.42,
+        "anteil_gier_proxy": 0.3099,
+        "anteil_gier_echt": 0.8841
+      },
+      "einstufung": {
+        "1": "repliziert",
+        "2a": "repliziert",
+        "2b": "nicht repliziert"
+      },
+      "mindeststichprobe": 0,
+      "abweichung": {
+        "1": "–",
+        "2a": "–",
+        "2b": "Abweichung"
+      }
+    },
+    "Index-PCR": {
+      "kennzahlen": {
+        "tage": 1752,
+        "rho_VIX": 0.346,
+        "rho_VIX_betrag": 0.346,
+        "kappa_overlay": 0.012,
+        "delta_gier_pp": 30.708,
+        "anteil_gier_proxy": 0.3099,
+        "anteil_gier_echt": 0.0029
+      },
+      "einstufung": {
+        "1": "repliziert",
+        "2a": "repliziert",
+        "2b": "repliziert"
+      },
+      "mindeststichprobe": 0,
+      "abweichung": {
+        "1": "–",
+        "2a": "–",
+        "2b": "–"
+      }
+    },
+    "UIQ-Defaults statt Ausschluss": {
+      "kennzahlen": {
+        "tage": 1752,
+        "rho_VIX": 0.21,
+        "rho_VIX_betrag": 0.21,
+        "kappa_overlay": 0.036,
+        "delta_gier_pp": 21.689,
+        "anteil_gier_proxy": 0.3099,
+        "anteil_gier_echt": 0.093
+      },
+      "einstufung": {
+        "1": "repliziert",
+        "2a": "repliziert",
+        "2b": "repliziert"
+      },
+      "mindeststichprobe": 0,
+      "abweichung": {
+        "1": "–",
+        "2a": "–",
+        "2b": "–"
+      }
+    }
+  },
+  "uneinheitlich": {
+    "1": false,
+    "2a": false,
+    "2b": true
+  },
+  "skalenbereinigt_originalschwellen": {
+    "schwellen": [
+      0.93,
+      1.16
+    ],
+    "uebereinstimmung": 0.4481,
+    "kappa": 0.108
+  },
+  "audit_teilfenster": {
+    "2019-10-07–2022-12-31": {
+      "fenster": [
+        "2019-10-07",
+        "2022-12-30"
+      ],
+      "tage": 816,
+      "korrelation": {
+        "rho_total_proxy": 0.383,
+        "rho_equity_proxy": 0.334,
+        "rho_index_proxy": 0.018,
+        "rho_total_VIX": 0.375,
+        "rho_total_MA10_proxy": 0.369,
+        "rho_total_MA10_proxy_MA10": 0.427,
+        "rho_dtotal_dproxy_5T": 0.432,
+        "je_segment": {
+          "C_preliminary_ohne_ETP": 0.383
+        }
+      },
+      "verteilung": {
+        "pcr_total": {
+          "mittel": 0.901,
+          "p05": 0.68,
+          "p95": 1.19
+        },
+        "pcr_equity": {
+          "mittel": 0.569,
+          "p05": 0.39,
+          "p95": 0.83
+        },
+        "proxy": {
+          "mittel": 0.985,
+          "p05": 0.63,
+          "p95": 1.4
+        }
+      },
+      "ruhig_vs_stress": {
+        "stressphasen": {
+          "tage": 220,
+          "rho_total_proxy": 0.52
+        },
+        "uebrige": {
+          "tage": 596,
+          "rho_total_proxy": 0.199
+        },
+        "VIX_ueber_25": {
+          "tage": 305,
+          "rho_total_proxy": 0.321
+        },
+        "VIX_bis_25": {
+          "tage": 511,
+          "rho_total_proxy": 0.137
+        }
+      },
+      "zustaende_overlay": {
+        "uebereinstimmung": 0.5,
+        "kappa": 0.075,
+        "kreuztabelle": {
+          "Gier": {
+            "Gier": 32,
+            "Panik": 4,
+            "neutral": 110
+          },
+          "Panik": {
+            "Gier": 6,
+            "Panik": 51,
+            "neutral": 168
+          },
+          "neutral": {
+            "Gier": 92,
+            "Panik": 28,
+            "neutral": 325
+          }
+        },
+        "anteile_echt": {
+          "neutral": 0.739,
+          "Gier": 0.1593,
+          "Panik": 0.1017
+        },
+        "anteile_proxy": {
+          "neutral": 0.5453,
+          "Panik": 0.2757,
+          "Gier": 0.1789
+        }
+      },
+      "zustaende_label": {
+        "uebereinstimmung": 0.5368,
+        "kappa": 0.157,
+        "anteile_echt": {
+          "NEUTRAL": 0.712,
+          "ÜBERVERKAUFT": 0.2145,
+          "ÜBERKAUFT": 0.0735
+        },
+        "anteile_proxy": {
+          "NEUTRAL": 0.4939,
+          "ÜBERVERKAUFT": 0.435,
+          "ÜBERKAUFT": 0.0711
+        }
+      },
+      "zustaende_overlay_skalenbereinigt": {
+        "schwellen_echt": [
+          0.758,
+          0.98
+        ],
+        "uebereinstimmung": 0.4767,
+        "kappa": 0.113
+      },
+      "rauschen": {
+        "autokorr_total_1T": 0.652,
+        "autokorr_total_20T": 0.31,
+        "autokorr_proxy_1T": 0.907,
+        "autokorr_proxy_20T": 0.44,
+        "autokorr_rangdifferenz_1T": 0.734,
+        "autokorr_rangdifferenz_20T": 0.569,
+        "abweichungsserien_skalenbereinigt": {
+          "anzahl": 176,
+          "median_tage": 1.5,
+          "anteil_tage_in_serien_ab_5": 0.347
+        },
+        "rangdifferenz_jahresmittel": {
+          "2019": 0.495,
+          "2020": -0.235,
+          "2021": -0.002,
+          "2022": 0.12
+        }
+      },
+      "stressphasen": {
+        "Covid 2020": {
+          "tage": 24,
+          "proxy_mittel": 1.296,
+          "total_mittel": 1.191,
+          "proxy_max": 1.4,
+          "total_max": 1.83,
+          "anteil_panik_proxy": 0.875,
+          "anteil_panik_echt": 0.708,
+          "anteil_panik_echt_skalenbereinigt": 0.833,
+          "erster_paniktag_proxy": "2020-02-24",
+          "erster_paniktag_echt_skalenbereinigt": "2020-02-21"
+        },
+        "Bärenmarkt 2022": {
+          "tage": 196,
+          "proxy_mittel": 1.081,
+          "total_mittel": 1.004,
+          "proxy_max": 1.4,
+          "total_max": 1.36,
+          "anteil_panik_proxy": 0.403,
+          "anteil_panik_echt": 0.194,
+          "anteil_panik_echt_skalenbereinigt": 0.505,
+          "erster_paniktag_proxy": "2022-01-18",
+          "erster_paniktag_echt_skalenbereinigt": "2022-01-05"
+        },
+        "Yen-Carry 2024": {
+          "tage": 0,
+          "proxy_mittel": NaN,
+          "total_mittel": NaN,
+          "proxy_max": NaN,
+          "total_max": NaN,
+          "anteil_panik_proxy": NaN,
+          "anteil_panik_echt": NaN,
+          "anteil_panik_echt_skalenbereinigt": NaN,
+          "erster_paniktag_proxy": null,
+          "erster_paniktag_echt_skalenbereinigt": null
+        }
+      }
+    },
+    "2023-01-01–2026-09-25": {
+      "fenster": [
+        "2023-01-03",
+        "2026-09-25"
+      ],
+      "tage": 936,
+      "korrelation": {
+        "rho_total_proxy": 0.256,
+        "rho_equity_proxy": 0.169,
+        "rho_index_proxy": 0.131,
+        "rho_total_VIX": 0.214,
+        "rho_total_MA10_proxy": 0.136,
+        "rho_total_MA10_proxy_MA10": 0.191,
+        "rho_dtotal_dproxy_5T": 0.364,
+        "je_segment": {
+          "C_preliminary_ohne_ETP": 0.256
+        }
+      },
+      "verteilung": {
+        "pcr_total": {
+          "mittel": 0.915,
+          "p05": 0.76,
+          "p95": 1.12
+        },
+        "pcr_equity": {
+          "mittel": 0.62,
+          "p05": 0.47,
+          "p95": 0.843
+        },
+        "proxy": {
+          "mittel": 0.802,
+          "p05": 0.58,
+          "p95": 1.17
+        }
+      },
+      "ruhig_vs_stress": {
+        "stressphasen": {
+          "tage": 17,
+          "rho_total_proxy": 0.785
+        },
+        "uebrige": {
+          "tage": 919,
+          "rho_total_proxy": 0.243
+        },
+        "VIX_ueber_25": {
+          "tage": 41,
+          "rho_total_proxy": 0.29
+        },
+        "VIX_bis_25": {
+          "tage": 895,
+          "rho_total_proxy": 0.22
+        }
+      },
+      "zustaende_overlay": {
+        "uebereinstimmung": 0.4882,
+        "kappa": 0.025,
+        "kreuztabelle": {
+          "Gier": {
+            "Gier": 16,
+            "Panik": 17,
+            "neutral": 364
+          },
+          "Panik": {
+            "Gier": 0,
+            "Panik": 13,
+            "neutral": 54
+          },
+          "neutral": {
+            "Gier": 17,
+            "Panik": 27,
+            "neutral": 428
+          }
+        },
+        "anteile_echt": {
+          "neutral": 0.9038,
+          "Panik": 0.0609,
+          "Gier": 0.0353
+        },
+        "anteile_proxy": {
+          "neutral": 0.5043,
+          "Gier": 0.4241,
+          "Panik": 0.0716
+        }
+      },
+      "zustaende_label": {
+        "uebereinstimmung": 0.5801,
+        "kappa": 0.027,
+        "anteile_echt": {
+          "NEUTRAL": 0.8066,
+          "ÜBERVERKAUFT": 0.1806,
+          "ÜBERKAUFT": 0.0128
+        },
+        "anteile_proxy": {
+          "NEUTRAL": 0.6784,
+          "ÜBERKAUFT": 0.2201,
+          "ÜBERVERKAUFT": 0.1015
+        }
+      },
+      "zustaende_overlay_skalenbereinigt": {
+        "schwellen_echt": [
+          0.88,
+          1.09
+        ],
+        "uebereinstimmung": 0.5224,
+        "kappa": 0.137
+      },
+      "rauschen": {
+        "autokorr_total_1T": 0.542,
+        "autokorr_total_20T": 0.273,
+        "autokorr_proxy_1T": 0.892,
+        "autokorr_proxy_20T": 0.336,
+        "autokorr_rangdifferenz_1T": 0.659,
+        "autokorr_rangdifferenz_20T": 0.492,
+        "abweichungsserien_skalenbereinigt": {
+          "anzahl": 182,
+          "median_tage": 2.0,
+          "anteil_tage_in_serien_ab_5": 0.387
+        },
+        "rangdifferenz_jahresmittel": {
+          "2023": 0.206,
+          "2024": 0.109,
+          "2025": -0.217,
+          "2026": -0.134
+        }
+      },
+      "stressphasen": {
+        "Covid 2020": {
+          "tage": 0,
+          "proxy_mittel": NaN,
+          "total_mittel": NaN,
+          "proxy_max": NaN,
+          "total_max": NaN,
+          "anteil_panik_proxy": NaN,
+          "anteil_panik_echt": NaN,
+          "anteil_panik_echt_skalenbereinigt": NaN,
+          "erster_paniktag_proxy": null,
+          "erster_paniktag_echt_skalenbereinigt": null
+        },
+        "Bärenmarkt 2022": {
+          "tage": 0,
+          "proxy_mittel": NaN,
+          "total_mittel": NaN,
+          "proxy_max": NaN,
+          "total_max": NaN,
+          "anteil_panik_proxy": NaN,
+          "anteil_panik_echt": NaN,
+          "anteil_panik_echt_skalenbereinigt": NaN,
+          "erster_paniktag_proxy": null,
+          "erster_paniktag_echt_skalenbereinigt": null
+        },
+        "Yen-Carry 2024": {
+          "tage": 17,
+          "proxy_mittel": 0.944,
+          "total_mittel": 0.976,
+          "proxy_max": 1.4,
+          "total_max": 1.28,
+          "anteil_panik_proxy": 0.235,
+          "anteil_panik_echt": 0.176,
+          "anteil_panik_echt_skalenbereinigt": 0.176,
+          "erster_paniktag_proxy": "2024-08-02",
+          "erster_paniktag_echt_skalenbereinigt": "2024-08-02"
+        }
+      }
+    }
+  }
+}
