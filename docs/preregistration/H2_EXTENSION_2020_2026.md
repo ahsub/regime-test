@@ -1,7 +1,11 @@
 # Präregistrierung H2-Ext – Replikation des H2-Informationsaudits auf 10/2019 – 09/2026
 
-**Rev. 1** · 29.09.2026 · **Entwurf zur Review, vor jeder Auswertung** · Roadmap Phase 3,
+**Rev. 2** · 29.09.2026 · **Entwurf zur Review, vor jeder Auswertung** · Roadmap Phase 3,
 Hypothese H2 (UIQ-Suite `docs/REGIME-BACKTEST-ROADMAP-2026-09-27.md`)
+(Rev. 2 nach Vorprüfung durch den Reviewer: Feststellungsregeln vollständig operationalisiert
+inkl. Grenzfälle und widersprüchlicher Teilbefunde (§7, §7a); Verbot einer Gesamtbewertung
+geschärft; H2b-Baseline-Empfehlung aus §6 entfernt – gehört in eine eigene Präregistrierung.
+Rev. 1: Commit `81b11d6`.)
 
 Dieses Dokument wird committet, **bevor** eine Kennzahl des Audits auf dem neuen Zeitraum
 berechnet wird. Die Auswertung startet erst nach Freigabe durch Axel (und ggf. Rev. 2 nach
@@ -21,8 +25,8 @@ Review). Änderungen nach Beginn der Auswertung nur als neue, separat nummeriert
 - **Ein Renditetest (wirtschaftliche Nutzbarkeit der echten PCR) ist ausdrücklich nicht
   Gegenstand.** Er wäre eine neue Hypothese H2b mit eigener Präregistrierung nach dem Muster
   von H3 (Entwicklungs-/Bestätigungsfenster, Baseline `classify_regime_v2()`, Kosten,
-  Stressphasen) und zählte dann bei n_trials mit. Ob H2b überhaupt angelegt wird, ist offen
-  und nicht Teil dieses Dokuments.
+  Stressphasen) und zählte dann bei n_trials mit. Ob H2b überhaupt angelegt wird und mit
+  welcher Baseline, ist offen und **nicht** Teil dieses Dokuments.
 
 ## 1. Fragestellung
 
@@ -109,27 +113,64 @@ ursprünglichen Zeitraums bestehen bleibt.
 
 Keine weiteren Phasen; keine Anpassung der Grenzen.
 
-## 6. VIX-only als Vergleichsbasis
+## 6. VIX als Vergleichsgröße (deskriptiv)
 
-Der VIX-Vergleich ist im Audit bereits über ρ(Total-PCR, VIX) enthalten und bleibt die
-Vergleichsbasis für die Eigenständigkeit (Aussage 1). Einen VIX-only-Renditebenchmark gibt es
-hier nicht, weil kein Renditetest stattfindet. Hinweis für ein mögliches H2b: In H1/H3/H4 war
-die Baseline `classify_regime_v2()`; VIX-only ist der Benchmark der geplanten Phase 4.
-Für ein H2b wäre `classify_regime_v2()` die vergleichbare Baseline, VIX-only allenfalls eine
-zusätzliche Referenz.
+Der VIX-Vergleich besteht ausschließlich aus der Rangkorrelation ρ(Total-PCR, VIX) wie im
+Original. Das ist ein **deskriptiver Zusammenhangsvergleich** zweier Tagesreihen – **kein**
+Vergleich mit einer VIX-basierten Handelsstrategie und **kein** Nachweis zusätzlicher
+Renditeinformation. Aussagen über Renditen oder Strategien sind aus diesem Audit nicht
+ableitbar.
 
 ## 7. Feststellungsregeln (vorab festgelegt)
 
 Das Original hatte keine Erfolgskriterien. Damit das Ergebnis nicht nachträglich gedeutet
 wird, gelten diese Regeln – sie sind **hier neu festgelegt** und bewusst grob:
 
-| Aussage | Kennzahl (Total-PCR, Hauptfenster) | „repliziert“ | „abgeschwächt“ | „nicht repliziert“ |
-|---|---|---|---|---|
-| 1 Eigenständigkeit ggü. VIX | ρ(Total-PCR, VIX) | < 0,50 | 0,50 – < 0,80 | ≥ 0,80 (= Redundanzschwelle aus H3 §10) |
-| 2a Proxy bildet PCR nicht ab | κ Overlay (0,75 / 1,10) | < 0,20 | 0,20 – < 0,40 | ≥ 0,40 |
-| 2b Skalenproblem | Differenz Anteil „Gier“ Proxy − echt | ≥ 20 Pp | 10 – < 20 Pp | < 10 Pp |
+**Einstufungsgrundlage (einzige):** Total-PCR, Hauptfenster 07.10.2019 – 25.09.2026, nach
+Ausschluss gemäß §2 (fehlende Proxy-Eingänge). Kennzahlen exakt wie in `run_h2_audit.py`
+berechnet und **auf 3 Nachkommastellen gerundet** (wie im Original-JSON); die Einstufung
+erfolgt auf dem gerundeten Wert.
 
-- Die Feststellungen werden je Aussage getrennt berichtet, **ohne** Gesamtnote.
+| Aussage | Kennzahl (exakte Definition) | „repliziert“ | „abgeschwächt“ | „nicht repliziert“ |
+|---|---|---|---|---|
+| 1 Eigenständigkeit ggü. VIX | `rho_total_VIX` = Spearman ρ(Total-PCR, VIX), Tageswerte | ρ < 0,500 | 0,500 ≤ ρ < 0,800 | ρ ≥ 0,800 (= Redundanzschwelle aus H3 §10) |
+| 2a Proxy bildet PCR nicht ab | `zustaende_overlay.kappa` = Cohen κ der Overlay-Zustände (Gier < 0,75 · neutral · Panik > 1,10) von Proxy und Total-PCR | κ < 0,200 | 0,200 ≤ κ < 0,400 | κ ≥ 0,400 |
+| 2b Skalenproblem | Δ = Anteil „Gier“ (Overlay) Proxy − Anteil „Gier“ echte Total-PCR, in Prozentpunkten, aus `anteile_proxy`/`anteile_echt` | Δ ≥ 20,0 Pp | 10,0 ≤ Δ < 20,0 Pp | Δ < 10,0 Pp (auch negativ) |
+
+**Grenzfälle, vorab entschieden:**
+- Werte genau auf einer Schwelle fallen in die Kategorie, deren Intervall die Schwelle
+  einschließt (siehe ≤ in der Tabelle).
+- ρ oder κ nicht berechenbar (NaN, z. B. nur ein Zustand besetzt) → Einstufung
+  „nicht bestimmbar“; es wird **nicht** auf eine andere Kennzahl ausgewichen.
+- Negatives ρ(Total-PCR, VIX): Aussage 1 wird nach |ρ| eingestuft (Eigenständigkeit betrifft
+  die Stärke, nicht die Richtung); die Richtung wird berichtet.
+- Weniger als 1.000 auswertbare Tage nach Ausschluss → alle drei Einstufungen „nicht
+  bestimmbar“, Bericht nur deskriptiv.
+
+## 7a. Teilbefunde, die der Einstufung widersprechen können
+
+Diese Werte werden berichtet, **ändern die Einstufung aber nicht**. Weicht ein Teilbefund in
+die jeweils ungünstigere Kategorie ab, wird er im Bericht als **„Abweichung“** markiert – nach
+denselben Schwellen wie §7:
+
+| Teilbefund | Beispiel | Behandlung |
+|---|---|---|
+| einzelne Stressphasen (§5) | Eigenständigkeit im Gesamtfenster, aber ρ(PCR, VIX) ≥ 0,500 in Covid 2020 | Einstufung bleibt; Phase als „Abweichung“ genannt. In Phasen unter 60 Tagen (Covid 24, Yen-Carry 17 Handelstage) werden ρ/κ nur berichtet, nicht markiert – zu wenige Tage |
+| Teilfenster 2019–2022 / 2023–2026 | κ < 0,200 in einem, ≥ 0,200 im anderen Teilfenster | Einstufung bleibt; Teilfenster als „Abweichung“ genannt |
+| Equity-/Index-PCR | Total repliziert, Equity nicht | Einstufung bleibt; nur berichtet |
+| Lauf mit UIQ-Defaults statt Ausschluss | andere Kategorie als der Hauptlauf | Einstufung bleibt; nur berichtet |
+| Original-Schwellen 0,93/1,16 (§4) | – | nur berichtet |
+
+Mehr als eine „Abweichung“ bei derselben Aussage wird im Bericht als **„uneinheitlich“**
+benannt, zusätzlich zur Einstufung – ohne diese zu ändern.
+
+## 7b. Keine Gesamtbewertung
+
+- Die drei Aussagen sind **verschiedene Fragen** und werden **ausschließlich getrennt**
+  berichtet (je Einstufung + Abweichungen).
+- Es gibt **keine** Gesamtnote, keinen Score und keine Formulierung wie „H2 bestätigt“ oder
+  „H2 repliziert“. Zulässig ist nur die Einzelformulierung, z. B. „Aussage 1: repliziert;
+  Aussage 2a: abgeschwächt; Aussage 2b: repliziert“.
 - **Keine Konsequenz für UIQ ergibt sich automatisch.** Die bestehenden Beschlüsse (kein
   PCR-Filter; Proxy als „VIX-Stress-Proxy“ benennen, SUITE №72) bleiben unberührt. Ein
   „nicht repliziert“ bei 2a/2b würde nur die Begründung der Umbenennung schwächen und wäre
