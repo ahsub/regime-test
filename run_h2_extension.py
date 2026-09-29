@@ -10,21 +10,36 @@ UNVERÄNDERT aus run_h2_audit.py importiert. audit() folgt Zeile für Zeile run_
 abweichend sind nur Fenster, Datenspalten (Daily-PCR), Stressphasen und der Ausschluss
 fehlender Proxy-Eingänge (§2).
 
-    python run_h2_extension.py --selftest   # Identitätsprüfung: audit() auf dem Original-
-                                            # fenster muss H2_audit.json exakt reproduzieren
+    python run_h2_extension.py --selftest   # Reproduktionsprüfung: audit() auf dem Original-
+                                            # fenster mit dem festgelegten Snapshot 2026-09-27
+                                            # muss H2_audit.json exakt reproduzieren
                                             # (berührt KEINE Daten nach 04.10.2019)
+
+Reichweite des Selbsttests: Er belegt, dass audit() + build_panel() + Snapshot 2026-09-27
+das gespeicherte Original-Ergebnis exakt reproduzieren. run_h2_audit.py liest fest denselben
+Snapshot (Konstante CBOE); ein darüber hinausgehender Nachweis der historischen
+Ausführungskette (z. B. damalige Paketversionen) ist er nicht.
     python run_h2_extension.py              # der eine präregistrierte Lauf (erst nach Freigabe)
 
 Ausgabe: results/h2_extension/H2_ext.json, H2_ext.md
 
-Version: 1.0.0 (29.09.2026)
+Version: 1.1.0 (29.09.2026)
 Changelog:
+  1.1.0 (29.09.2026) – nach Code-Review: Selbsttest mit NaN-Normalisierung und Ausgabe der
+                       abweichenden JSON-Pfade; Abdeckungsprüfung beider Snapshots im Fenster;
+                       Ausschlussgründe je Eingangsreihe; Abbruch statt stiller Änderung der
+                       Zeitachse, falls Proxy-Eingänge fehlen (im Fenster: 0 fehlende Tage,
+                       vorab geprüft → Hauptlauf unverändert); Tage und Ausschlüsse je
+                       Stressphase; atomares Schreiben der Ergebnisse; Mindeststichproben im
+                       Bericht ausgewiesen.
   1.0.0 (29.09.2026) – Erstfassung zur Code-Review (noch nicht auf neuen Daten ausgeführt).
 """
 from __future__ import annotations
 
 import hashlib
 import json
+import math
+import os
 import sys
 from pathlib import Path
 
@@ -233,6 +248,31 @@ def load_panel(orig: bool = False) -> pd.DataFrame:
                              "pcr_index_daily": "pcr_index"})
 
 
+def _canon(o):
+    """Kanonische Form für den Vergleich: nicht endliche Zahlen → None (beidseitig)."""
+    if isinstance(o, dict):
+        return {str(k): _canon(v) for k, v in o.items()}
+    if isinstance(o, list):
+        return [_canon(v) for v in o]
+    if isinstance(o, float) and not math.isfinite(o):
+        return None
+    return o
+
+
+def _diff_paths(a, b, path="$"):
+    if isinstance(a, dict) and isinstance(b, dict):
+        out = []
+        for k in sorted(set(a) | set(b)):
+            if k not in a or k not in b:
+                out.append(f"{path}.{k} (nur in {'Referenz' if k in b else 'neu'})")
+            else:
+                out += _diff_paths(a[k], b[k], f"{path}.{k}")
+        return out
+    if isinstance(a, list) and isinstance(b, list) and len(a) == len(b):
+        return [p for i, (x, y) in enumerate(zip(a, b)) for p in _diff_paths(x, y, f"{path}[{i}]")]
+    return [] if a == b else [f"{path}: neu={a!r} Referenz={b!r}"]
+
+
 def selftest() -> int:
     if sha256(ROOT / "run_h2_audit.py") != AUDIT_SHA256:
         print("ABBRUCH – run_h2_audit.py weicht vom präregistrierten Stand ab."); return 1
@@ -241,12 +281,16 @@ def selftest() -> int:
         print("ABBRUCH – H2_audit.json weicht vom präregistrierten Stand ab."); return 1
     p = load_panel(orig=True)
     x = add_proxy(p.loc[ORIG_WINDOW[0]:ORIG_WINDOW[1]])
-    R = json.loads(json.dumps(audit(x, ORIG_STRESS), ensure_ascii=False, default=str))
-    ref = json.loads(orig_json.read_text())
-    if R != ref:
-        diffs = [k for k in ref if R.get(k) != ref[k]]
-        print(f"SELBSTTEST FEHLGESCHLAGEN – abweichende Abschnitte: {diffs}"); return 1
-    print("SELBSTTEST OK – audit() reproduziert H2_audit.json exakt (Fenster 2009–2019).")
+    R = _canon(json.loads(json.dumps(audit(x, ORIG_STRESS), ensure_ascii=False, default=str)))
+    ref = _canon(json.loads(orig_json.read_text()))
+    diffs = _diff_paths(R, ref)
+    if diffs:
+        print(f"SELBSTTEST FEHLGESCHLAGEN – {len(diffs)} abweichende Pfade:")
+        for d in diffs[:50]:
+            print("  " + d)
+        return 1
+    print("SELBSTTEST OK – audit() reproduziert H2_audit.json exakt (Fenster 2009–2019, "
+          "Snapshot 2026-09-27).")
     return 0
 
 
@@ -256,19 +300,34 @@ def main() -> int:
     if selftest():
         return 1
     OUT.mkdir(parents=True, exist_ok=True)
-    if (OUT / "H2_ext.json").exists():
-        print("ABBRUCH – Ergebnis existiert bereits (präregistriert ist genau ein Lauf)."); return 1
+    leftovers = [f.name for f in OUT.iterdir() if f.name.startswith("H2_ext")]
+    if leftovers:
+        print(f"ABBRUCH – im Ergebnisordner liegen bereits {leftovers} "
+              "(präregistriert ist genau ein Lauf; Reste eines Abbruchs nicht still überschreiben)."); return 1
 
     p = load_panel()
     w = p.loc[WINDOW[0]:WINDOW[1]]
-    w = w[w["pcr_total"].notna()]
+    # Abdeckung: Fenster muss am ersten/letzten Tag beginnen/enden, PCR ohne Lücke
+    if w.index.min().strftime("%Y-%m-%d") != WINDOW[0] or w.index.max().strftime("%Y-%m-%d") != WINDOW[1]:
+        print(f"ABBRUCH – Kalender deckt Fenster nicht ab: {w.index.min()} – {w.index.max()}"); return 1
+    pcr_missing = int(w["pcr_total"].isna().sum())
+    if pcr_missing:
+        print(f"ABBRUCH – {pcr_missing} Handelstage ohne Total-PCR im Fenster."); return 1
+    miss_by = {c: [d.strftime("%Y-%m-%d") for d in w.index[w[c].isna()]] for c in ("VIX", "VIX3M", "VVIX")}
     missing = w[["VIX", "VIX3M", "VVIX"]].isna().any(axis=1)
     excluded = [d.strftime("%Y-%m-%d") for d in w.index[missing]]
-    x = add_proxy(w[~missing])                       # Hauptlauf: Ausschluss (§2)
-    x_def = add_proxy(w)                             # Zusatz: UIQ-Defaults (§2)
+    if excluded:
+        # Ein Ausschluss würde die Zeitachse von diff/rolling/autocorr in audit() verschieben
+        # (Code-Review 29.09.2026). Vorab geprüft: im Fenster fehlen 0 Tage. Tritt dennoch ein
+        # Ausschluss auf, wird nicht still weitergerechnet – Behandlung erst per Rev. 4.
+        print(f"ABBRUCH – {len(excluded)} Tage mit fehlenden Proxy-Eingängen {miss_by}; "
+              "Behandlung der Zeitachse ist nicht präregistriert."); return 1
+    x = add_proxy(w)                                 # Hauptlauf (Ausschluss = leer, §2)
+    x_def = add_proxy(w)                             # Zusatz: UIQ-Defaults (§2), hier identisch
 
     R = {"praeregistrierung": "docs/preregistration/H2_EXTENSION_2020_2026.md Rev. 3",
-         "ausgeschlossen_fehlende_proxy_eingaenge": {"anzahl": len(excluded), "tage": excluded},
+         "ausgeschlossen_fehlende_proxy_eingaenge": {"anzahl": len(excluded), "tage": excluded,
+                                                    "je_reihe": {c: len(v) for c, v in miss_by.items()}},
          "audit": audit(x, STRESS)}
 
     # §7 Einstufung (Hauptfenster, Total-PCR)
@@ -278,8 +337,13 @@ def main() -> int:
 
     # §7a Teilbefunde
     parts = {}
+    stress_days = {}
     for name, a, b in STRESS:
         parts[f"Stressphase {name}"] = (x.loc[a:b], "pcr_total", MIN_DAYS_PART)
+        stress_days[name] = {"handelstage": int(len(w.loc[a:b])),
+                             "ausgeschlossen": int(missing.loc[a:b].sum()),
+                             "mindeststichprobe": MIN_DAYS_PART}
+    R["stressphasen_stichprobe"] = stress_days
     for a, b in SUBWINDOWS:
         parts[f"Teilfenster {a[:4]}–{b[:4]}"] = (x.loc[a:b], "pcr_total", 0)
     parts["Equity-PCR"] = (x, "pcr_equity", 0)
@@ -289,7 +353,7 @@ def main() -> int:
     for name, (df, col, mind) in parts.items():
         m = metrics3(df, col)
         c = classify(m, mind)
-        tb[name] = {"kennzahlen": m, "einstufung": c,
+        tb[name] = {"kennzahlen": m, "einstufung": c, "mindeststichprobe": mind,
                     "abweichung": {k: deviation(cls[k], c[k]) for k in cls}}
     R["teilbefunde"] = tb
     R["uneinheitlich"] = {k: sum(v["abweichung"][k] == "Abweichung" for v in tb.values()) > 1 for k in cls}
@@ -304,8 +368,12 @@ def main() -> int:
     # §4 Zusatz: vollständiges Audit je Teilfenster
     R["audit_teilfenster"] = {f"{a}–{b}": audit(x.loc[a:b], STRESS) for a, b in SUBWINDOWS}
 
-    (OUT / "H2_ext.json").write_text(json.dumps(R, indent=2, ensure_ascii=False, default=str))
-    (OUT / "H2_ext.md").write_text(report_md(R))
+    # Atomar: erst beide Dateien vollständig als .tmp schreiben, dann umbenennen
+    tj, tm = OUT / "H2_ext.json.tmp", OUT / "H2_ext.md.tmp"
+    tj.write_text(json.dumps(R, indent=2, ensure_ascii=False, default=str))
+    tm.write_text(report_md(R))
+    os.replace(tj, OUT / "H2_ext.json")
+    os.replace(tm, OUT / "H2_ext.md")
     print((OUT / "H2_ext.md").read_text())
     return 0
 
@@ -324,12 +392,15 @@ def report_md(R: dict) -> str:
          f"| 2b Skalenproblem | Δ Anteil „Gier“ Proxy − echt (Pp) | {m['delta_gier_pp']} (Proxy {m['anteil_gier_proxy']}, echt {m['anteil_gier_echt']}) | {a['2b']} | {'ja' if R['uneinheitlich']['2b'] else 'nein'} |",
          "", "Zulässige Interpretation nur gemäß §7c.", "",
          "## Teilbefunde (§7a – ändern die Einstufung nicht)", "",
-         "| Teilbefund | Tage | \\|ρ\\| VIX | κ | Δ Pp | 1 | 2a | 2b |", "|---|---|---|---|---|---|---|---|"]
+         "| Teilbefund | Tage | Mindeststichprobe | \\|ρ\\| VIX | κ | Δ Pp | 1 | 2a | 2b |",
+         "|---|---|---|---|---|---|---|---|---|"]
     for name, v in R["teilbefunde"].items():
         k = v["kennzahlen"]; c = v["einstufung"]; d = v["abweichung"]
         cell = lambda q: c[q] + (" ⚠ Abweichung" if d[q] == "Abweichung" else "")  # noqa: E731
-        L.append(f"| {name} | {k['tage']} | {k['rho_VIX_betrag']} | {k['kappa_overlay']} | "
-                 f"{k['delta_gier_pp']} | {cell('1')} | {cell('2a')} | {cell('2b')} |")
+        L.append(f"| {name} | {k['tage']} | {v['mindeststichprobe'] or '–'} | {k['rho_VIX_betrag']} | "
+                 f"{k['kappa_overlay']} | {k['delta_gier_pp']} | {cell('1')} | {cell('2a')} | {cell('2b')} |")
+    L += ["", "Mindeststichprobe: Stressphasen 60 Handelstage (§7a), Hauptfenster 1.000 (§7); "
+          "Teilfenster, Equity/Index und Default-Variante ohne Mindestwert."]
     o = R["skalenbereinigt_originalschwellen"]
     L += ["", "## Zusätzlich (§4, neu gegenüber Original)", "",
           f"- Skalenbereinigt mit Original-Schwellen {o['schwellen']}: Übereinstimmung "
