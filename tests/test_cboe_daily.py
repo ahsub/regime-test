@@ -8,7 +8,10 @@ wird beim ersten Lauf des Fetchers geprüft (Summen-/Ratio-Kontrollen je Tag).
 
 Aufruf ohne pytest:   python tests/test_cboe_daily.py
 
-Version: 1.0.0 (28.09.2026)
+Version: 1.1.0 (29.09.2026)
+Changelog:
+  1.1.0 (29.09.2026) – Fetcher-Test auf --snapshot umgestellt; Update-Lauf ohne Snapshot geprüft.
+  1.0.0 (28.09.2026) – Erstfassung.
 """
 from __future__ import annotations
 
@@ -172,7 +175,10 @@ def test_fetcher_offline_writes_snapshot():
         (fx.CACHE / "2019-10-04.html").write_text(NO_DATA)
         (fx.CACHE / "2019-10-07.html").write_text(page())
         (fx.CACHE / "2019-10-08.html").write_text(page(eq=(1000000, 700000), ratios={}))
-        rc = fx.main(["--start", "2019-10-04", "--end", "2019-10-08", "--offline"])
+        args = ["--start", "2019-10-04", "--end", "2019-10-08", "--offline"]
+        assert fx.main(args) == 0                        # Update-Lauf: kein Snapshot
+        assert not fx.OUT_ROOT.exists()
+        rc = fx.main(args + ["--snapshot"])
         assert rc == 0
         out = next(fx.OUT_ROOT.iterdir())
         rep = json.loads((out / "fetch_report.json").read_text())
@@ -181,11 +187,11 @@ def test_fetcher_offline_writes_snapshot():
         from datalayer import verify_snapshot
         assert len(verify_snapshot(out)) == 7          # 6 CSV + Bericht
         # Wiederholter Lauf: Snapshot existiert → Abbruch statt Überschreiben
-        assert fx.main(["--start", "2019-10-04", "--end", "2019-10-08", "--offline"]) == 1
+        assert fx.main(args + ["--snapshot"]) == 1
         # Doppelte Seite (identische Volumina) → Fehler, kein Snapshot
         (fx.CACHE / "2019-10-08.html").write_text(page())
         fx.OUT_ROOT = t / "out2"
-        assert fx.main(["--start", "2019-10-04", "--end", "2019-10-08", "--offline"]) == 1
+        assert fx.main(args + ["--snapshot"]) == 1
         assert not fx.OUT_ROOT.exists()
 
 

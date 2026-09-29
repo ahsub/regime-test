@@ -12,21 +12,26 @@ Ablauf
      Ein erneuter Lauf lädt nur fehlende Tage nach → auch als Tages-Update nutzbar.
   2. Jede Seite parsen und prüfen (src/datalayer/cboe_daily.py):
      Calls+Puts=Total, Index+ETP+Equity=Summe, Seiten-Ratio = Puts/Calls.
-  3. Snapshot data/raw/cboe/<heute>_pcr_daily/ schreiben:
+  3. NUR mit --snapshot: Snapshot data/raw/cboe/<heute>_pcr_daily/ schreiben:
      totalpc_daily.csv, indexpc_daily.csv, equitypc_daily.csv, etppc_daily.csv,
      vixpc_daily.csv, spxpc_daily.csv (Cboe-CSV-Format), fetch_report.json
      (inkl. SHA-256 jeder Rohseite), SHA256SUMS.txt.
      run_phase1.py nimmt den Ordner automatisch mit.
+     Ohne --snapshot wird nur der Cache aktualisiert und geprüft (Tages-Update);
+     Snapshots entstehen so nur für bewusst eingefrorene Stände, z. B. vor einem
+     Backtest – nicht bei jedem Lauf.
 
 Aufruf (auf einem Rechner mit Internetzugang, Laufzeit Erstlauf ca. 45–60 min):
-    python scripts/fetch_cboe_pcr_daily.py
-    python scripts/fetch_cboe_pcr_daily.py --start 2024-01-01 --end 2024-01-31 --no-snapshot
+    python scripts/fetch_cboe_pcr_daily.py                # Update: Cache nachladen + prüfen
+    python scripts/fetch_cboe_pcr_daily.py --snapshot     # zusätzlich Snapshot einfrieren
     python scripts/fetch_cboe_pcr_daily.py --offline      # nur Cache neu parsen
 
-Exit-Code 0 = Snapshot geschrieben, 1 = Abbruch/Fehler (Details im Bericht).
+Exit-Code 0 = Lauf ohne Fehler (bzw. Snapshot geschrieben), 1 = Abbruch/Fehler.
 
-Version: 1.0.0 (28.09.2026)
+Version: 1.1.0 (29.09.2026)
 Changelog:
+  1.1.0 (29.09.2026) – Snapshot nur noch mit --snapshot (vorher bei jedem Lauf,
+                       auch nach Datumswechsel → doppelte Ordner); --no-snapshot entfällt.
   1.0.0 (28.09.2026) – Erstfassung.
 """
 from __future__ import annotations
@@ -93,7 +98,8 @@ def main(argv=None) -> int:
     ap.add_argument("--end", default=None, help="Ende inkl. (Standard: gestern)")
     ap.add_argument("--sleep", type=float, default=1.5, help="Pause je Abruf in s")
     ap.add_argument("--offline", action="store_true", help="nur Cache parsen, nichts laden")
-    ap.add_argument("--no-snapshot", action="store_true", help="nur laden/prüfen")
+    ap.add_argument("--snapshot", action="store_true",
+                    help="Snapshot data/raw/cboe/<heute>_pcr_daily/ schreiben (sonst nur Cache)")
     ap.add_argument("--allow-errors", action="store_true",
                     help="Snapshot trotz Parserfehlern schreiben (Fehltage bleiben leer)")
     a = ap.parse_args(argv)
@@ -196,8 +202,9 @@ def main(argv=None) -> int:
     if first and first != FIRST_DAILY_DATE and a.start <= FIRST_DAILY_DATE:
         print(f"  ! erster Datentag {first} ≠ erwartet {FIRST_DAILY_DATE}")
 
-    if a.no_snapshot:
-        return 1 if errors else 0
+    if not a.snapshot:
+        print("Nur Cache aktualisiert (kein Snapshot). Einfrieren mit --snapshot.")
+        return 1 if (errors or not_cached) else 0
     if not days:
         print("ABBRUCH – keine Datentage.")
         return 1
