@@ -7,8 +7,9 @@ Paraphrasierende Reviews mit Bezug zu `regime-test` und UIQ. Keine Buchtexte im 
 | 28.09.2026 | [Alexander, *Market Models* (2001)](LITERATUR-REVIEW-ALEXANDER-MARKET-MODELS-2026-09-28.md) | Fensterartefakte gleichgewichteter Schätzer; Prognosebewertung hängt an Verlustfunktion und Zeitraum; Derman-Regime (Kurs-Vol-Kopplung); PCA der Vol-Laufzeitstruktur; Befund D13 (DCE-„EVT-VaR“) |
 | 28.09.2026 | [Alexander, *Market Risk Analysis* I+II (2008)](LITERATUR-REVIEW-ALEXANDER-MARKET-RISK-ANALYSIS-I-II-2026-09-28.md) | Markov-Switching (Schätzung, Regime-Anzahl nur mit simulierten kritischen Werten); Quantilregression für Kurs-Vol-Randabhängigkeit; II.8 Prognose-/Backtest-Methodik (Mincer-Zarnowitz, Diebold-Mariano, Christoffersen); Einheitswurzel-Grenzfälle bei Vol-Indizes; Sharpe-Korrektur bei Autokorrelation |
 | 28.09.2026 | [Alexander, *Market Risk Analysis* III+IV (2008)](LITERATUR-REVIEW-ALEXANDER-MARKET-RISK-ANALYSIS-III-IV-2026-09-28.md) | Derman-Regime operational (Korrelation ATM-Vol ↔ Basiswert ≈ 0 / negativ / stark negativ); Laufzeitstruktur von Vol-Indizes als Regimeanzeiger; Varianz-Risikoprämie mit Crash-Asymmetrie; gefilterte historische Simulation und Präzision extremer Quantile (Lösungsweg D13); Stresstests ohne Wahrscheinlichkeit |
+| 05.10.2026 | [Marketstate-Review: Harvey et al., Nystrup et al., Guidolin/Timmermann, Kritzman et al., Hamilton, Hamilton/Susmel, Ang/Timmermann, Ang, López de Prado (AFML, MLAM, CFI)](LITERATUR-REVIEW-MARKETSTATE-2026-10-05.md) | Volatilitätsskalierung (Tail/Vol-of-Vol statt Sharpe); spurious Persistenz in GARCH vs. Regime-Persistenz; Student-t; Zustandszahl-Tests nicht standardverteilt; Filter vs. Glättung (Look-ahead); Echtzeit-Fehlalarme; Purging/Embargo bei überlappenden Prognosehorizonten; Deflated Sharpe und Versuchszählung; Kausalität/Collider bei Kontrollvariablen |
 
-## Offene Konsequenzen (K1–K18, Stand 28.09.2026)
+## Offene Konsequenzen (K1–K21, Stand 05.10.2026)
 
 | # | Inhalt | Status |
 |---|---|---|
@@ -28,6 +29,9 @@ Paraphrasierende Reviews mit Bezug zu `regime-test` und UIQ. Keine Buchtexte im 
 | K16 | UIQ-Optionstexte: Prämienaussagen stets mit asymmetrischem Verlustprofil | offen, UIQ Batch 3 |
 | K17 | Backtests: Spot-VIX nie als handelbar werten | offen, Phase-4-Präregistrierung |
 | K18 | Szenario-/Event-Aussagen nur hypothetisch, ohne Wahrscheinlichkeit/Obergrenze | bei Wiederaufnahme Event & Surprise Gate |
+| K19 | Purging und Embargo bei überlappenden Prognosehorizonten (Leakage über Labels; AFML Kap. 7) – Ergänzung zu K3 + K7 | offen, Phase-4-Präregistrierung, **vor erstem Phase-4-Code** |
+| K20 | Nur gefilterte Regimewahrscheinlichkeiten in Backtests, keine geglätteten (Kim-Algorithmus nutzt spätere Daten; Hamilton Kap. 22) | offen, Phase-4-Präregistrierung; gilt auch für H10 und künftige HMM-Läufe |
+| K21 | Zustandszahl vorab festlegen und begründen, nicht per Likelihood-Ratio-Test wählen (Tests nicht standardverteilt; Hamilton, Ang/Timmermann) – Ergänzung zu K10 | offen, künftige HMM-Vergleiche |
 
 ## Weitere Kandidaten aus externem Review (29.09.2026)
 
